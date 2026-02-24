@@ -13,6 +13,7 @@ import "react-native-reanimated";
 
 import { useColorScheme } from "@/components/useColorScheme";
 import { AuthProvider } from "../src/context/AuthContext";
+import { ProfileProvider } from "../src/context/ProfileContext";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -48,7 +49,9 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <RootLayoutNav />
+      <ProfileProvider>
+        <RootLayoutNav />
+      </ProfileProvider>
     </AuthProvider>
   );
 }
@@ -65,6 +68,8 @@ function RootLayoutNav() {
         <Stack.Screen name="forgot-password" />
         <Stack.Screen name="verify-email" />
         <Stack.Screen name="complete-profile" />
+        <Stack.Screen name="profile" />
+        <Stack.Screen name="settings" />
         <Stack.Screen name="modal" options={{ presentation: "modal" }} />
       </Stack>
     </ThemeProvider>
