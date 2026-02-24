@@ -1,29 +1,45 @@
-import React, { Component, ReactNode } from "react";
+import React, { ReactNode, useCallback } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Colors from "../constants/Colors";
 
-interface Props {
+interface ErrorBoundaryProps {
   children: ReactNode;
   fallback?: ReactNode;
 }
 
-interface State {
-  hasError: boolean;
-  error: Error | null;
+interface ErrorInfo {
+  componentStack?: string;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
+export class ErrorBoundary extends React.Component<
+  ErrorBoundaryProps,
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error) {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: any) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("ErrorBoundary caught an error:", error, errorInfo);
+  }
+
+  componentDidUpdate(
+    prevProps: ErrorBoundaryProps,
+    prevState: { hasError: boolean; error: Error | null },
+  ) {
+    // Reset error state when children change
+    if (
+      this.state.hasError &&
+      prevState.hasError &&
+      this.props.children !== prevProps.children
+    ) {
+      this.setState({ hasError: false, error: null });
+    }
   }
 
   handleRetry = () => {
@@ -37,12 +53,16 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <View style={styles.container}>
+        <View style={styles.container} key="error-fallback">
           <Text style={styles.title}>Oops! Something went wrong</Text>
           <Text style={styles.message}>
             {this.state.error?.message || "An unexpected error occurred"}
           </Text>
-          <TouchableOpacity style={styles.button} onPress={this.handleRetry}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={this.handleRetry}
+            key="retry-button"
+          >
             <Text style={styles.buttonText}>Try Again</Text>
           </TouchableOpacity>
         </View>
@@ -59,6 +79,12 @@ interface ErrorFallbackProps {
 }
 
 export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
+  const handlePress = useCallback(() => {
+    if (resetError) {
+      resetError();
+    }
+  }, [resetError]);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Oops! Something went wrong</Text>
@@ -66,12 +92,26 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
         {error?.message || "An unexpected error occurred"}
       </Text>
       {resetError && (
-        <TouchableOpacity style={styles.button} onPress={resetError}>
+        <TouchableOpacity style={styles.button} onPress={handlePress}>
           <Text style={styles.buttonText}>Try Again</Text>
         </TouchableOpacity>
       )}
     </View>
   );
+}
+
+// Simple fallback wrapper that doesn't use class component
+export function withErrorBoundary<P extends object>(
+  WrappedComponent: React.ComponentType<P>,
+  fallback?: ReactNode,
+) {
+  return function WithErrorBoundary(props: P) {
+    return (
+      <ErrorBoundary fallback={fallback}>
+        <WrappedComponent {...props} />
+      </ErrorBoundary>
+    );
+  };
 }
 
 const styles = StyleSheet.create({

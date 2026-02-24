@@ -13,22 +13,14 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ErrorBoundary } from "../../components/ErrorBoundary";
 import { ProfileSkeleton } from "../../components/LoadingSkeleton";
 import Colors from "../../constants/Colors";
-import { useAuth } from "../../src/context/AuthContext";
 import { useProfile } from "../../src/context/ProfileContext";
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const {
-    profile,
-    loading,
-    uploadProfilePicture,
-    updateProfileData,
-    clearError,
-  } = useProfile();
-  const { user } = useAuth();
+  const { profile, loading, uploadProfilePicture, updateProfileData } =
+    useProfile();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState("");
   const [editBio, setEditBio] = useState("");
@@ -40,12 +32,6 @@ export default function ProfileScreen() {
       setEditBio(profile.bio);
     }
   }, [profile]);
-
-  React.useEffect(() => {
-    return () => {
-      clearError();
-    };
-  }, []);
 
   const pickImage = async () => {
     const permissionResult =
@@ -128,139 +114,131 @@ export default function ProfileScreen() {
   }
 
   return (
-    <ErrorBoundary>
-      <SafeAreaView style={styles.container}>
-        <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity onPress={pickImage} disabled={uploading}>
-              {uploading ? (
-                <View style={styles.avatarPlaceholder}>
-                  <ActivityIndicator size="large" color={Colors.light.tint} />
-                </View>
-              ) : profile?.photoURL ? (
-                <Image
-                  source={{ uri: profile.photoURL }}
-                  style={styles.avatar}
-                />
-              ) : (
-                <View style={styles.avatarPlaceholder}>
-                  <Text style={styles.avatarText}>
-                    {profile?.displayName?.charAt(0).toUpperCase() || "U"}
-                  </Text>
-                </View>
-              )}
-              <View style={styles.editBadge}>
-                <Text style={styles.editBadgeText}>✎</Text>
+    <SafeAreaView style={styles.container}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={pickImage} disabled={uploading}>
+            {uploading ? (
+              <View style={styles.avatarPlaceholder}>
+                <ActivityIndicator size="large" color={Colors.light.tint} />
               </View>
-            </TouchableOpacity>
-            <Text style={styles.headerName}>
-              {profile?.displayName || "User"}
-            </Text>
-            <Text style={styles.headerEmail}>{profile?.email}</Text>
-            <View style={styles.roleBadge}>
-              <Text style={styles.roleText}>
-                {getRoleLabel(profile?.role || "student")}
-              </Text>
-            </View>
-          </View>
-
-          {/* Profile Info Card */}
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>Profile Information</Text>
-              <TouchableOpacity onPress={() => setIsEditing(!isEditing)}>
-                <Text style={styles.editButton}>
-                  {isEditing ? "Cancel" : "Edit"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {isEditing ? (
-              <View style={styles.editForm}>
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Display Name</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={editName}
-                    onChangeText={setEditName}
-                    placeholder="Enter your name"
-                    placeholderTextColor={Colors.light.textSecondary}
-                  />
-                </View>
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Bio</Text>
-                  <TextInput
-                    style={[styles.input, styles.textArea]}
-                    value={editBio}
-                    onChangeText={setEditBio}
-                    placeholder="Tell us about yourself"
-                    placeholderTextColor={Colors.light.textSecondary}
-                    multiline
-                    numberOfLines={4}
-                  />
-                </View>
-                <TouchableOpacity
-                  style={styles.saveButton}
-                  onPress={handleSave}
-                >
-                  <Text style={styles.saveButtonText}>Save Changes</Text>
-                </TouchableOpacity>
-              </View>
+            ) : profile?.photoURL ? (
+              <Image source={{ uri: profile.photoURL }} style={styles.avatar} />
             ) : (
-              <View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Name</Text>
-                  <Text style={styles.infoValue}>
-                    {profile?.displayName || "Not set"}
-                  </Text>
-                </View>
-                <View style={styles.divider} />
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Bio</Text>
-                  <Text style={styles.infoValue}>
-                    {profile?.bio || "Not set"}
-                  </Text>
-                </View>
-                <View style={styles.divider} />
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Role</Text>
-                  <Text style={styles.infoValue}>
-                    {getRoleLabel(profile?.role || "student")}
-                  </Text>
-                </View>
-                <View style={styles.divider} />
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Member Since</Text>
-                  <Text style={styles.infoValue}>
-                    {formatDate(profile?.createdAt || "")}
-                  </Text>
-                </View>
+              <View style={styles.avatarPlaceholder}>
+                <Text style={styles.avatarText}>
+                  {profile?.displayName?.charAt(0).toUpperCase() || "U"}
+                </Text>
               </View>
             )}
+            <View style={styles.editBadge}>
+              <Text style={styles.editBadgeText}>✎</Text>
+            </View>
+          </TouchableOpacity>
+          <Text style={styles.headerName}>
+            {profile?.displayName || "User"}
+          </Text>
+          <Text style={styles.headerEmail}>{profile?.email}</Text>
+          <View style={styles.roleBadge}>
+            <Text style={styles.roleText}>
+              {getRoleLabel(profile?.role || "student")}
+            </Text>
+          </View>
+        </View>
+
+        {/* Profile Info Card */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>Profile Information</Text>
+            <TouchableOpacity onPress={() => setIsEditing(!isEditing)}>
+              <Text style={styles.editButton}>
+                {isEditing ? "Cancel" : "Edit"}
+              </Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Quick Actions */}
-          <View style={styles.actions}>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => router.push("/settings")}
-            >
-              <Text style={styles.actionButtonText}>Settings</Text>
-              <Text style={styles.actionArrow}>›</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
-              <Text style={styles.actionButtonText}>Help & Support</Text>
-              <Text style={styles.actionArrow}>›</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
-              <Text style={styles.actionButtonText}>Privacy Policy</Text>
-              <Text style={styles.actionArrow}>›</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    </ErrorBoundary>
+          {isEditing ? (
+            <View style={styles.editForm}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Display Name</Text>
+                <TextInput
+                  style={styles.input}
+                  value={editName}
+                  onChangeText={setEditName}
+                  placeholder="Enter your name"
+                  placeholderTextColor={Colors.light.textSecondary}
+                />
+              </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Bio</Text>
+                <TextInput
+                  style={[styles.input, styles.textArea]}
+                  value={editBio}
+                  onChangeText={setEditBio}
+                  placeholder="Tell us about yourself"
+                  placeholderTextColor={Colors.light.textSecondary}
+                  multiline
+                  numberOfLines={4}
+                />
+              </View>
+              <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+                <Text style={styles.saveButtonText}>Save Changes</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Name</Text>
+                <Text style={styles.infoValue}>
+                  {profile?.displayName || "Not set"}
+                </Text>
+              </View>
+              <View style={styles.divider} />
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Bio</Text>
+                <Text style={styles.infoValue}>
+                  {profile?.bio || "Not set"}
+                </Text>
+              </View>
+              <View style={styles.divider} />
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Role</Text>
+                <Text style={styles.infoValue}>
+                  {getRoleLabel(profile?.role || "student")}
+                </Text>
+              </View>
+              <View style={styles.divider} />
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Member Since</Text>
+                <Text style={styles.infoValue}>
+                  {formatDate(profile?.createdAt || "")}
+                </Text>
+              </View>
+            </View>
+          )}
+        </View>
+
+        {/* Quick Actions */}
+        <View style={styles.actions}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => router.push("/settings")}
+          >
+            <Text style={styles.actionButtonText}>Settings</Text>
+            <Text style={styles.actionArrow}>›</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton}>
+            <Text style={styles.actionButtonText}>Help & Support</Text>
+            <Text style={styles.actionArrow}>›</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton}>
+            <Text style={styles.actionButtonText}>Privacy Policy</Text>
+            <Text style={styles.actionArrow}>›</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
