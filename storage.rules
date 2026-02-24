@@ -1,0 +1,118 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isEmailVerified() {
+      return request.auth.token.email_verified == true;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return request.auth != null 
+        && exists(/databases/$(environment)/documents/users/$(request.auth.uid))
+        && get(/databases/$(environment)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Profile pictures - stored in /users/{userId}/profilePicture
+    match /users/{userId}/profilePicture/{fileName} {
+      // Anyone can read profile pictures
+      allow read: if true;
+      
+      // Only the user can upload their own profile picture
+      // Must be verified and the file must be an image
+      allow write: if isOwner(userId)
+        && isEmailVerified()
+        && request.resource != null
+        && request.resource.contentType.matches('image/.*')
+        && request.resource.size < 5 * 1024 * 1024; // Max 5MB
+      
+      // Allow delete for user or admin
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+    
+    // Course thumbnails - stored in /courses/{courseId}/thumbnail
+    match /courses/{courseId}/thumbnail/{fileName} {
+      // Anyone can read course thumbnails
+      allow read: if true;
+      
+      // Only verified instructors who own the course can upload
+      allow write: if isSignedIn()
+        && isEmailVerified()
+        && exists(/databases/$(environment)/documents/courses/$(courseId))
+        && get(/databases/$(environment)/documents/courses/$(courseId)).data.instructorId == request.auth.uid
+        && request.resource != null
+        && request.resource.contentType.matches('image/.*')
+        && request.resource.size < 10 * 1024 * 1024; // Max 10MB
+      
+      allow delete: if isSignedIn()
+        && (
+          exists(/databases/$(environment)/documents/courses/$(courseId))
+          && get(/databases/$(environment)/documents/courses/$(courseId)).data.instructorId == request.auth.uid
+          || isAdmin()
+        );
+    }
+    
+    // Course materials - stored in /courses/{courseId}/materials
+    match /courses/{courseId}/materials/{fileName} {
+      // Only enrolled users can read course materials
+      // This requires a custom claim or checking enrollment in Firestore
+      allow read: if isSignedIn()
+        && exists(/databases/$(environment)/documents/users/$(request.auth.uid)/enrolledCourses/$(courseId));
+      
+      // Only course owner can upload materials
+      allow write: if isSignedIn()
+        && isEmailVerified()
+        && exists(/databases/$(environment)/documents/courses/$(courseId))
+        && get(/databases/$(environment)/documents/courses/$(courseId)).data.instructorId == request.auth.uid
+        && request.resource != null
+        && request.resource.size < 100 * 1024 * 1024; // Max 100MB
+      
+      allow delete: if isSignedIn()
+        && (
+          exists(/databases/$(environment)/documents/courses/$(courseId))
+          && get(/databases/$(environment)/documents/courses/$(courseId)).data.instructorId == request.auth.uid
+          || isAdmin()
+        );
+    }
+    
+    // Lesson videos - stored in /courses/{courseId}/lessons/{lessonId}/video
+    match /courses/{courseId}/lessons/{lessonId}/video/{fileName} {
+      // Only enrolled users can read lesson videos
+      allow read: if isSignedIn()
+        && exists(/databases/$(environment)/documents/users/$(request.auth.uid)/enrolledCourses/$(courseId));
+      
+      // Only course owner can upload videos
+      allow write: if isSignedIn()
+        && isEmailVerified()
+        && exists(/databases/$(environment)/documents/courses/$(courseId))
+        && get(/databases/$(environment)/documents/courses/$(courseId)).data.instructorId == request.auth.uid
+        && request.resource != null
+        && (
+          request.resource.contentType == 'video/mp4'
+          || request.resource.contentType == 'video/webm'
+        )
+        && request.resource.size < 500 * 1024 * 1024; // Max 500MB
+      
+      allow delete: if isSignedIn()
+        && (
+          exists(/databases/$(environment)/documents/courses/$(courseId))
+          && get(/databases/$(environment)/documents/courses/$(courseId)).data.instructorId == request.auth.uid
+          || isAdmin()
+        );
+    }
+    
+    // Default deny - deny all other access
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

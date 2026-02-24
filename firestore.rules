@@ -1,0 +1,146 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isEmailVerified() {
+      return request.auth.token.email_verified == true;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isValidEmail(email) {
+      return email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
+    }
+    
+    function isValidRole(role) {
+      return role in ['student', 'instructor', 'admin'];
+    }
+    
+    function isValidUserData() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['email', 'role', 'createdAt', 'updatedAt'])
+        && isValidEmail(data.email)
+        && isValidRole(data.role)
+        && data.email is string
+        && data.role is string
+        && data.displayName is string
+        && data.photoURL is string
+        && (data.bio is string || data.bio == null)
+        && (data.role == 'student' || data.role == 'instructor' || data.role == 'admin');
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Public profile data (read-only)
+      allow read: if true;
+      
+      // Users can read their own profile
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Users can only write their own profile
+      // Email must be verified for write operations
+      allow create: if isSignedIn() 
+        && isEmailVerified() 
+        && request.auth.uid == userId
+        && isValidUserData();
+      
+      allow update: if isOwner(userId) 
+        && isEmailVerified() 
+        && isValidUserData();
+      
+      allow delete: if isAdmin();
+      
+      // Subcollection: User's enrolled courses
+      match /enrolledCourses/{courseId} {
+        allow read: if isOwner(/databases/$(database)/documents/users/$(userId));
+        allow create, update: if isOwner(/databases/$(database)/documents/users/$(userId)) 
+          && isEmailVerified();
+        allow delete: if isOwner(/databases/$(database)/documents/users/$(userId)) || isAdmin();
+      }
+      
+      // Subcollection: User's created courses (for instructors)
+      match /createdCourses/{courseId} {
+        allow read: if isOwner(/databases/$(database)/documents/users/$(userId)) 
+          || isAdmin();
+        allow create, update: if isOwner(/databases/$(database)/documents/users/$(userId)) 
+          && isEmailVerified()
+          && get(/databases/$(database)/documents/users/$(userId)).data.role == 'instructor';
+        allow delete: if isOwner(/databases/$(database)/documents/users/$(userId)) || isAdmin();
+      }
+    }
+    
+    // Courses collection (public read, instructor write)
+    match /courses/{courseId} {
+      // Anyone can read course listings
+      allow read: if true;
+      
+      // Only verified instructors can create courses
+      allow create: if isSignedIn() 
+        && isEmailVerified()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'instructor';
+      
+      // Course owner or admin can update
+      allow update: if isSignedIn() 
+        && isEmailVerified()
+        && (
+          resource.data.instructorId == request.auth.uid
+          || isAdmin()
+        );
+      
+      // Course owner or admin can delete
+      allow delete: if isSignedIn() 
+        && (
+          resource.data.instructorId == request.auth.uid
+          || isAdmin()
+        );
+      
+      // Lessons subcollection
+      match /lessons/{lessonId} {
+        allow read: if true;
+        allow create, update: if isSignedIn() 
+          && isEmailVerified()
+          && get(/databases/$(database)/documents/courses/$(courseId)).data.instructorId == request.auth.uid;
+        allow delete: if isSignedIn() 
+          && (
+            get(/databases/$(database)/documents/courses/$(courseId)).data.instructorId == request.auth.uid
+            || isAdmin()
+          );
+      }
+      
+      // Reviews subcollection
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if isSignedIn() && isEmailVerified();
+        allow update, delete: if isSignedIn() 
+          && (
+            resource.data.userId == request.auth.uid
+            || isAdmin()
+          );
+      }
+    }
+    
+    // Categories collection (public read-only)
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // Announcements collection
+    match /announcements/{announcementId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}
