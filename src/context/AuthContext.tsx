@@ -48,6 +48,67 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const USER_STORAGE_KEY = "lms_user_data";
 
+// Helper function to safely interact with SecureStore
+// This handles platform differences and provides fallback for web
+const secureStore = {
+  async getItem(key: string): Promise<string | null> {
+    try {
+      if (typeof SecureStore.deleteItemAsync !== "function") {
+        console.warn(
+          "SecureStore.deleteItemAsync not available, using localStorage fallback",
+        );
+        return localStorage.getItem(key);
+      }
+      return await SecureStore.getItemAsync(key);
+    } catch (error) {
+      console.warn("SecureStore.getItemAsync failed:", error);
+      // Fallback to localStorage on web
+      if (typeof window !== "undefined" && window.localStorage) {
+        return localStorage.getItem(key);
+      }
+      return null;
+    }
+  },
+
+  async setItem(key: string, value: string): Promise<void> {
+    try {
+      if (typeof SecureStore.setItemAsync !== "function") {
+        console.warn(
+          "SecureStore.setItemAsync not available, using localStorage fallback",
+        );
+        localStorage.setItem(key, value);
+        return;
+      }
+      await SecureStore.setItemAsync(key, value);
+    } catch (error) {
+      console.warn("SecureStore.setItemAsync failed:", error);
+      // Fallback to localStorage on web
+      if (typeof window !== "undefined" && window.localStorage) {
+        localStorage.setItem(key, value);
+      }
+    }
+  },
+
+  async deleteItem(key: string): Promise<void> {
+    try {
+      if (typeof SecureStore.deleteItemAsync !== "function") {
+        console.warn(
+          "SecureStore.deleteItemAsync not available, using localStorage fallback",
+        );
+        localStorage.removeItem(key);
+        return;
+      }
+      await SecureStore.deleteItemAsync(key);
+    } catch (error) {
+      console.warn("SecureStore.deleteItemAsync failed:", error);
+      // Fallback to localStorage on web
+      if (typeof window !== "undefined" && window.localStorage) {
+        localStorage.removeItem(key);
+      }
+    }
+  },
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const loadStoredUser = async () => {
       try {
-        const storedUser = await SecureStore.getItemAsync(USER_STORAGE_KEY);
+        const storedUser = await secureStore.getItem(USER_STORAGE_KEY);
         if (storedUser) {
           setUser(JSON.parse(storedUser));
         }
@@ -85,14 +146,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
           setUser(authUser);
           // Store user data securely
-          await SecureStore.setItemAsync(
-            USER_STORAGE_KEY,
-            JSON.stringify(authUser),
-          );
+          await secureStore.setItem(USER_STORAGE_KEY, JSON.stringify(authUser));
         }
       } else {
         setUser(null);
-        await SecureStore.deleteItemAsync(USER_STORAGE_KEY);
+        await secureStore.deleteItem(USER_STORAGE_KEY);
       }
       setLoading(false);
     });
@@ -146,10 +204,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         photoURL: null,
       };
       setUser(authUser);
-      await SecureStore.setItemAsync(
-        USER_STORAGE_KEY,
-        JSON.stringify(authUser),
-      );
+      await secureStore.setItem(USER_STORAGE_KEY, JSON.stringify(authUser));
     } catch (error: any) {
       console.error("Sign up error:", error);
       throw new Error(getAuthErrorMessage(error.code));
@@ -175,7 +230,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       await signOut(auth);
       setUser(null);
-      await SecureStore.deleteItemAsync(USER_STORAGE_KEY);
+      await secureStore.deleteItem(USER_STORAGE_KEY);
     } catch (error: any) {
       console.error("Sign out error:", error);
       throw new Error(getAuthErrorMessage(error.code));
@@ -218,7 +273,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (user) {
         const updatedUser = { ...user, ...data };
         setUser(updatedUser);
-        await SecureStore.setItemAsync(
+        await secureStore.setItem(
           USER_STORAGE_KEY,
           JSON.stringify(updatedUser),
         );
