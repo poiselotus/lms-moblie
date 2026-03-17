@@ -20,6 +20,7 @@ interface FeaturedCourseCardProps {
   price: string;
   image?: string;
   badge?: string;
+  progress?: number;
   onPress?: () => void;
 }
 
@@ -63,6 +64,10 @@ export default function FeaturedCourseCard({
             <Text style={styles.badgeText}>{badge}</Text>
           </View>
         )}
+
+        {/* Progress indicator */}
+{/* Progress indicator - pass progress prop for featured courses with progress */}
+
 
         {/* Play button */}
         <View style={styles.playButton}>
@@ -132,6 +137,45 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 5,
+  },
+  progressIndicator: {
+    position: "absolute",
+    bottom: 12,
+    right: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.9)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  progressCircle: {
+    position: "absolute",
+    top: 4,
+    left: 4,
+    right: 4,
+    bottom: 4,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: Colors.light.tint + "60",
+  },
+  progressArc: {
+    position: "absolute",
+    top: 4,
+    left: 4,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: Colors.light.tint,
+    borderTopWidth: 0,
+    transform: [{ rotateZ: "0deg" }],
+  },
+  progressPercent: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: Colors.light.text,
+    position: "absolute",
   },
   pressed: {
     opacity: 0.95,

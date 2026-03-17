@@ -5,12 +5,12 @@ import { getStorage } from "firebase/storage";
 
 // Firebase configuration - Replace with your own config
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID",
+  apiKey: "AIzaSyCEFp5k2K9rBAEq0HhPwgq3pp2M5ZdM9lk",
+  authDomain: "lms-mobile-ce2d3.firebaseapp.com",
+  projectId: "lms-mobile-ce2d3",
+  storageBucket: "lms-mobile-ce2d3.firebasestorage.app",
+  messagingSenderId: "312650134580",
+  appId: "1:312650134580:web:908fe23bd92e72dcef8661"
 };
 
 // Initialize Firebase only once

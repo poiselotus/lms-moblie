@@ -78,11 +78,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     height: 48,
     marginRight: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    boxShadow: "0 1px 4px rgba(0, 0, 0, 0.05)",
   },
   searchIcon: {
     marginRight: 8,

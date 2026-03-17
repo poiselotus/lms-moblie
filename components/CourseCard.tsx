@@ -12,6 +12,7 @@ interface CourseCardProps {
   image?: string;
   duration?: string;
   lessons?: number;
+  progress?: number;
   onPress?: () => void;
 }
 
@@ -39,6 +40,9 @@ export default function CourseCard({
     >
       {/* Thumbnail */}
       <View style={styles.thumbnailContainer}>
+        <View style={styles.progressContainer}>
+          {/* Progress bar placeholder - install react-native-progress if needed */}
+        </View>
         {image ? (
           <Image source={{ uri: image }} style={styles.thumbnail} />
         ) : (
@@ -55,6 +59,8 @@ export default function CourseCard({
             <Text style={styles.durationText}>{duration}</Text>
           </View>
         )}
+{/* Progress overlay - pass progress prop when available */}
+
       </View>
 
       {/* Content */}
@@ -134,6 +140,13 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
+  progressContainer: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    right: 8,
+    zIndex: 1,
+  },
   pressed: {
     opacity: 0.9,
     transform: [{ scale: 0.98 }],
@@ -212,5 +225,46 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 18,
     fontWeight: "700",
+  },
+  progressOverlay: {
+    position: "absolute",
+    bottom: 8,
+    left: 8,
+    right: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.7)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  progressBarContainer: {
+    flex: 1,
+    height: 4,
+    backgroundColor: "rgba(255,255,255,0.3)",
+    borderRadius: 2,
+    marginRight: 6,
+    overflow: "hidden",
+  },
+  progressBarBackground: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  progressBarFill: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    bottom: 0,
+    backgroundColor: Colors.light.tint,
+  },
+  progressText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "600",
+    minWidth: 24,
+    textAlign: "center",
   },
 });
