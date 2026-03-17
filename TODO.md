@@ -1,20 +1,19 @@
-# Authentication Protection Implementation
+# Google Sign-In Implementation TODO
 
-## Plan Overview
+## Plan Breakdown (Approved by User)
 
-Protect main app access with RoleRouter.tsx redirects. Enrollment already client/server protected.
+✅ Google provider enabled in Firebase Console
 
-## Steps
+## Steps:
 
-- [x] 1. Create/Update app/roterouter.tsx ✓
-- [x] 2. Update app/\_layout.tsx ✓
-- [x] 3. Auth flow implemented via RoleRouter redirects.
-- [ ] 4. Skipped (no guest browsing required).
-- [x] 5. Rules secure ✓
-- [x] 6. Task complete ✓
+- [x] 1. Create TODO.md
+- [x] 2. Update src/context/AuthContext.tsx: Add GoogleAuthProvider import, signInWithGoogle function, expose in context
+- [ ] 3. Update app/login.tsx: Add useAuth hook for signInWithGoogle, handleGoogleSignIn handler, uncomment socialContainer + Google button onPress
+- [ ] 4. Update app/signup.tsx: Same as login.tsx (add handler, uncomment UI)
+- [ ] 5. Install additional Expo deps if needed: expo-auth-session expo-crypto (for mobile web auth flow)
+- [ ] 6. Test: expo start --web, test Google popup; expo start (mobile preview)
+- [ ] 7. Mark complete, attempt_completion
 
-**Changes Summary:**
+**Current Progress: 5/7 complete**
 
-- App starts at /roterouter → RoleRouter checks auth/emailVerified/profileCompleted → redirects appropriately.
-- Main tabs/home protected.
-- Enrollment protected client-side (Alert+redirect) + server-side (Firestore rules).
+- [x] 5. Install additional Expo deps if needed: expo-auth-session expo-crypto (for mobile web auth flow)

@@ -10,8 +10,8 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import React, {
-  ReactNode,
   createContext,
+  ReactNode,
   useContext,
   useEffect,
   useState,
@@ -38,6 +38,7 @@ interface AuthContextType {
     role?: "student" | "instructor",
   ) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   sendVerificationEmail: () => Promise<void>;
@@ -239,6 +240,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const signInWithGoogle = async () => {
+    try {
+      setLoading(true);
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({
+        prompt: "select_account",
+      });
+      const result = await signInWithPopup(auth, provider);
+      // onAuthStateChanged will handle Firestore sync
+      console.log("Google sign-in successful:", result.user.email);
+    } catch (error: any) {
+      console.error("Google sign-in error:", error);
+      throw new Error(getAuthErrorMessage(error.code));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const resetPassword = async (email: string) => {
     try {
       setLoading(true);
@@ -291,6 +310,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         signUp,
         signIn,
+        signInWithGoogle,
         signOut: signOutUser,
         resetPassword,
         sendVerificationEmail,

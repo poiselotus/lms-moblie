@@ -23,7 +23,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
   const colorScheme = "light";
 
   const validateForm = () => {
@@ -54,6 +54,14 @@ export default function LoginScreen() {
       Alert.alert("Error", error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error: any) {
+      Alert.alert("Error", error.message);
     }
   };
 
@@ -218,17 +226,12 @@ export default function LoginScreen() {
             />
           </View>
 
-          {/* Social Login Buttons (Commented out for future) */}
-          {/* 
+          {/* Social Login Buttons */}
           <View style={styles.socialContainer}>
-            <Pressable style={styles.socialButton}>
+            <Pressable style={styles.socialButton} onPress={handleGoogleSignIn}>
               <Ionicons name="logo-google" size={24} color="#DB4437" />
             </Pressable>
-            <Pressable style={styles.socialButton}>
-              <Ionicons name="logo-apple" size={24} color="#000" />
-            </Pressable>
           </View>
-          */}
 
           {/* Sign Up Link */}
           <View style={styles.signUpContainer}>
