@@ -26,10 +26,10 @@ const LEVELS: { value: CourseLevel; label: string }[] = [
 ];
 
 const PRICE_RANGES = [
-  { min: 0, max: 50, label: "Under $50" },
-  { min: 50, max: 100, label: "$50 - $100" },
-  { min: 100, max: 200, label: "$100 - $200" },
-  { min: 200, max: 99999, label: "$200+" },
+{ min: 0, max: 25000, label: "Under ₦25k" },
+  { min: 25000, max: 50000, label: "₦25k - ₦50k" },
+  { min: 50000, max: 100000, label: "₦50k - ₦100k" },
+  { min: 100000, max: 999999999, label: "₦100k+" },
 ];
 
 const RATINGS = [

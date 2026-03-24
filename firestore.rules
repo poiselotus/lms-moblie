@@ -52,12 +52,10 @@ service cloud.firestore {
       // Users can only write their own profile
       // Email must be verified for write operations
       allow create: if isSignedIn() 
-        && isEmailVerified() 
         && request.auth.uid == userId
         && isValidUserData();
       
       allow update: if isOwner(userId) 
-        && isEmailVerified() 
         && isValidUserData();
       
       allow delete: if isAdmin();

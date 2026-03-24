@@ -487,7 +487,7 @@ export default function HomeScreen() {
                     instructor="Your Instructor"
                     rating={4.5}
                     reviews={120}
-                    price="$49.99"
+                    price="₦49,999"
                     duration="12h 30m"
                     lessons={25}
                     progress={item.progress}
@@ -573,7 +573,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
-    position: "relative",
+    ...(('web' as any) === 'web' ? { boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)' } : {}),
   },
   notificationBadge: {
     position: "absolute",

@@ -20,6 +20,7 @@ import React, {
   useState,
 } from "react";
 import { auth, db, storage } from "../config/firebase";
+import { useAuth } from "./AuthContext";
 
 export interface UserProfile {
   uid: string;
@@ -58,6 +59,15 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user: authUser } = useAuth();
+
+  const getProfilePath = () => {
+    if (!authUser?.role || !auth.currentUser)
+      return `users/${auth.currentUser.uid}`;
+    return `users/${authUser.role}/${auth.currentUser.uid}`;
+  };
+
+  const fallbackPath = () => `users/${auth.currentUser?.uid || ""}`;
 
   const fetchProfile = async () => {
     try {
@@ -68,18 +78,26 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const userDoc = await getDoc(doc(db, "users", user.uid));
+      const rolePath = doc(db, getProfilePath());
+      let userDoc = await getDoc(rolePath);
+
+      // Fallback to main users collection
+      if (!userDoc.exists()) {
+        userDoc = await getDoc(doc(db, fallbackPath()));
+      }
+
       if (userDoc.exists()) {
-        setProfile(userDoc.data() as UserProfile);
+        const profileData = userDoc.data() as UserProfile;
+        setProfile(profileData);
       } else {
-        // Create default profile if not exists
+        // Create default in both
         const defaultProfile: UserProfile = {
           uid: user.uid,
           email: user.email || "",
           displayName: user.displayName || "User",
-          photoURL: user.photoURL,
+          photoURL: user.photoURL || null,
           bio: "",
-          role: "student",
+          role: authUser?.role || "student",
           preferences: {
             notifications: true,
             language: "en",
@@ -88,7 +106,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
-        await setDoc(doc(db, "users", user.uid), defaultProfile);
+        await setDoc(rolePath, defaultProfile);
+        await setDoc(doc(db, fallbackPath()), defaultProfile);
         setProfile(defaultProfile);
       }
     } catch (err: any) {
@@ -100,7 +119,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     fetchProfile();
-  }, []);
+  }, [authUser]);
 
   const uploadProfilePicture = async (uri: string) => {
     try {
@@ -108,7 +127,6 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       const user = auth.currentUser;
       if (!user) throw new Error("Not authenticated");
 
-      // Upload image to Storage
       const response = await fetch(uri);
       const blob = await response.blob();
       const storageRef = ref(
@@ -119,14 +137,17 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       await uploadBytes(storageRef, blob);
       const downloadURL = await getDownloadURL(storageRef);
 
-      // Update Firebase Auth profile
       await updateProfile(user, { photoURL: downloadURL });
 
-      // Update Firestore profile
-      await updateDoc(doc(db, "users", user.uid), {
+      const updateData = {
         photoURL: downloadURL,
         updatedAt: new Date().toISOString(),
-      });
+      };
+
+      const rolePath = doc(db, getProfilePath());
+      await updateDoc(rolePath, updateData);
+      const fallbackPathDoc = doc(db, fallbackPath());
+      await updateDoc(fallbackPathDoc, updateData);
 
       await fetchProfile();
     } catch (err: any) {
@@ -148,13 +169,15 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         updatedAt: new Date().toISOString(),
       };
 
-      // Update display name in Firebase Auth if changed
       if (data.displayName && data.displayName !== user.displayName) {
         await updateProfile(user, { displayName: data.displayName });
       }
 
-      // Update Firestore
-      await updateDoc(doc(db, "users", user.uid), updateData);
+      const rolePathDoc = doc(db, getProfilePath());
+      await updateDoc(rolePathDoc, updateData);
+      const fallbackDoc = doc(db, fallbackPath());
+      await updateDoc(fallbackDoc, updateData);
+
       await fetchProfile();
     } catch (err: any) {
       setError(err.message);
@@ -173,14 +196,12 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       const user = auth.currentUser;
       if (!user || !user.email) throw new Error("Not authenticated");
 
-      // Reauthenticate user
       const credential = EmailAuthProvider.credential(
         user.email,
         currentPassword,
       );
       await reauthenticateWithCredential(user, credential);
 
-      // Update password
       await updatePassword(user, newPassword);
     } catch (err: any) {
       setError(err.message);
@@ -196,22 +217,19 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       const user = auth.currentUser;
       if (!user || !user.email) throw new Error("Not authenticated");
 
-      // Reauthenticate user
       const credential = EmailAuthProvider.credential(user.email, password);
       await reauthenticateWithCredential(user, credential);
 
-      // Delete profile picture from Storage
+      // Delete storage folder
       try {
         const storageRef = ref(storage, `users/${user.uid}/profilePicture`);
         await deleteObject(storageRef);
-      } catch {
-        // Ignore if file doesn't exist
-      }
+      } catch {}
 
-      // Delete Firestore document
-      await deleteDoc(doc(db, "users", user.uid));
+      // Delete both paths
+      await deleteDoc(doc(db, getProfilePath()));
+      await deleteDoc(doc(db, fallbackPath()));
 
-      // Delete Firebase Auth account
       await deleteUser(user);
     } catch (err: any) {
       setError(err.message);

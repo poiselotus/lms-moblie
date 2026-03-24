@@ -49,7 +49,7 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await signIn(email.trim(), password);
-      // Navigation will be handled by the auth state change
+      router.replace("/(tabs)");
     } catch (error: any) {
       Alert.alert("Error", error.message);
     } finally {
@@ -60,6 +60,7 @@ export default function LoginScreen() {
   const handleGoogleSignIn = async () => {
     try {
       await signInWithGoogle();
+      router.replace("/(tabs)");
     } catch (error: any) {
       Alert.alert("Error", error.message);
     }

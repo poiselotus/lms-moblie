@@ -59,8 +59,7 @@ export default function CourseCard({
             <Text style={styles.durationText}>{duration}</Text>
           </View>
         )}
-{/* Progress overlay - pass progress prop when available */}
-
+        {/* Progress overlay - pass progress prop when available */}
       </View>
 
       {/* Content */}
@@ -135,10 +134,14 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     marginBottom: 16,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
+    ...(('web' as any) === 'web' ? { boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)' } : {}),
   },
   progressContainer: {
     position: "absolute",
