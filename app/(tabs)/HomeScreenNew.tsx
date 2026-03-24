@@ -211,7 +211,7 @@ interface ContinueLearning {
 }
 
 export default function HomeScreen() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -405,6 +405,34 @@ export default function HomeScreen() {
             />
             <View style={styles.notificationBadge} />
           </Pressable>
+          {user && (
+            <Pressable
+              style={({ pressed }) => [
+                styles.notificationButton,
+                pressed && styles.pressed,
+              ]}
+              onPress={() => {
+                Alert.alert(
+                  "Sign Out",
+                  "Are you sure you want to sign out?",
+                  [
+                    { text: "Cancel", style: "cancel" },
+                    { 
+                      text: "Sign Out", 
+                      style: "destructive", 
+                      onPress: signOut 
+                    }
+                  ]
+                );
+              }}
+            >
+              <Ionicons
+                name="log-out-outline"
+                size={24}
+                color={Colors[colorScheme].text}
+              />
+            </Pressable>
+          )}
         </View>
 
         {/* Search Bar */}
@@ -573,7 +601,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
-    ...(('web' as any) === 'web' ? { boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)' } : {}),
+    ...(("web" as any) === "web"
+      ? { boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)" }
+      : {}),
   },
   notificationBadge: {
     position: "absolute",

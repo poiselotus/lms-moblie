@@ -1,5 +1,5 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
-import { Alert } from "react-native";
 import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
@@ -11,7 +11,13 @@ import {
   signOut,
   updateProfile,
 } from "firebase/auth";
-import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+} from "firebase/firestore";
 import React, {
   createContext,
   ReactNode,
@@ -19,6 +25,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
+import { Alert } from "react-native";
 import { auth, db } from "../config/firebase";
 
 interface AuthUser {
@@ -56,39 +63,28 @@ const USER_STORAGE_KEY = "lms_user_data";
 const secureStore = {
   async getItem(key: string): Promise<string | null> {
     try {
-      if (typeof SecureStore.deleteItemAsync !== "function") {
-        return (typeof localStorage !== 'undefined') ? localStorage.getItem(key) : null;
-      }
       return await SecureStore.getItemAsync(key);
     } catch (error) {
       console.warn("SecureStore.getItemAsync failed:", error);
-      return (typeof localStorage !== 'undefined') ? localStorage.getItem(key) : null;
+      return await AsyncStorage.getItem(key);
     }
   },
 
   async setItem(key: string, value: string): Promise<void> {
     try {
-      if (typeof SecureStore.setItemAsync !== "function") {
-        if (typeof localStorage !== 'undefined') localStorage.setItem(key, value);
-        return;
-      }
       await SecureStore.setItemAsync(key, value);
     } catch (error) {
       console.warn("SecureStore.setItemAsync failed:", error);
-      if (typeof localStorage !== 'undefined') localStorage.setItem(key, value);
+      await AsyncStorage.setItem(key, value);
     }
   },
 
   async deleteItem(key: string): Promise<void> {
     try {
-      if (typeof SecureStore.deleteItemAsync !== "function") {
-        if (typeof localStorage !== 'undefined') localStorage.removeItem(key);
-        return;
-      }
       await SecureStore.deleteItemAsync(key);
     } catch (error) {
       console.warn("SecureStore.deleteItemAsync failed:", error);
-      if (typeof localStorage !== 'undefined') localStorage.removeItem(key);
+      await AsyncStorage.removeItem(key);
     }
   },
 };
@@ -112,42 +108,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     loadStoredUser();
 
-    console.log('Setting up auth listener');
+    console.log("Setting up auth listener");
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      console.log('Auth state changed:', firebaseUser ? firebaseUser.email : 'signed out');
+      console.log(
+        "Auth state changed:",
+        firebaseUser ? firebaseUser.email : "signed out",
+      );
       if (firebaseUser) {
         try {
           const uid = firebaseUser.uid;
           const userDocRef = doc(db, "users", uid);
           const userDoc = await getDoc(userDocRef);
-          
+
           let userData: any = {};
           let role = "student";
 
           if (userDoc.exists()) {
             userData = userDoc.data();
             role = userData.role || "student";
-            console.log('User doc found:', role);
+            console.log("User doc found:", role);
           } else {
             // Create default profile
-            console.log('No user doc, creating default');
+            console.log("No user doc, creating default");
             const defaultData = {
               uid,
-              email: firebaseUser.email || '',
-              displayName: firebaseUser.displayName || 'User',
+              email: firebaseUser.email || "",
+              displayName: firebaseUser.displayName || "User",
               role,
               profileCompleted: true,
               emailVerified: firebaseUser.emailVerified || false,
               createdAt: serverTimestamp(),
             };
             await setDoc(userDocRef, defaultData);
-            
-            // Create role-specific
-            roleDocRef = doc(db, `users/${role}`, uid);
-            await setDoc(roleDocRef, defaultData);
-            
+
             userData = defaultData;
-            console.log('Default user doc created');
+            console.log("Default user doc created");
           }
 
           const authUser: AuthUser = {
@@ -159,20 +154,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             profileCompleted: userData.profileCompleted || true,
             emailVerified: firebaseUser.emailVerified,
           };
-          
+
           setUser(authUser);
           await secureStore.setItem(USER_STORAGE_KEY, JSON.stringify(authUser));
-          console.log('User state set:', authUser.role, authUser.emailVerified);
-          
-          if (!userData.role) {
-            console.log('Prompting role selection');
-            promptRoleSelection(uid, authUser);
-          }
+          console.log("User state set:", authUser.role, authUser.emailVerified);
         } catch (error) {
-          console.error('Listener error:', error);
+          console.error("Listener error:", error);
         }
       } else {
-        console.log('User signed out');
+        console.log("User signed out");
         setUser(null);
         await secureStore.deleteItem(USER_STORAGE_KEY);
       }
@@ -180,7 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => {
-      console.log('Cleaning up auth listener');
+      console.log("Cleaning up auth listener");
       unsubscribe();
     };
   }, []);
@@ -199,11 +189,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           onPress: () => selectAndSaveRole("instructor", uid, currentUser),
         },
       ],
-      { cancelable: false }
+      { cancelable: false },
     );
   };
 
-  const selectAndSaveRole = async (role: "student" | "instructor", uid: string, currentUser: AuthUser) => {
+  const selectAndSaveRole = async (
+    role: "student" | "instructor",
+    uid: string,
+    currentUser: AuthUser,
+  ) => {
     try {
       const updateData = {
         role,
@@ -214,10 +208,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await updateDoc(doc(db, "users", uid), updateData);
 
       // Update role-specific
-      await setDoc(doc(db, `users/${role}`, uid), {
-        ...currentUser,
-        ...updateData,
-      }, { merge: true });
+      await setDoc(
+        doc(db, `users/${role}`, uid),
+        {
+          ...currentUser,
+          ...updateData,
+        },
+        { merge: true },
+      );
 
       // Update local
       const updatedUser: AuthUser = {
@@ -227,9 +225,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       setUser(updatedUser);
       await secureStore.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
-      console.log('Role updated:', role);
+      console.log("Role updated:", role);
     } catch (error) {
-      console.error('Role save error:', error);
+      console.error("Role save error:", error);
       Alert.alert("Error", "Failed to save role. Please try again.");
     }
   };
@@ -242,9 +240,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ) => {
     try {
       setLoading(true);
-      console.log('Signup:', email, role);
+      console.log("Signup:", email, role);
 
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password,
+      );
       const firebaseUser = userCredential.user;
 
       await updateProfile(firebaseUser, { displayName: name });
@@ -275,7 +277,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setUser(authUser);
       await secureStore.setItem(USER_STORAGE_KEY, JSON.stringify(authUser));
-      console.log('Signup complete');
+      console.log("Signup complete");
     } catch (error: any) {
       console.error("Signup error:", error);
       throw new Error(getAuthErrorMessage(error.code));
@@ -286,10 +288,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log('Sign in attempt:', email);
+      console.log("Sign in attempt:", email);
       setLoading(true);
       await signInWithEmailAndPassword(auth, email, password);
-      console.log('Sign in Firebase success');
+      console.log("Sign in Firebase success");
     } catch (error: any) {
       console.error("Sign in Firebase error:", error);
       throw new Error(getAuthErrorMessage(error.code));
@@ -300,13 +302,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      console.log('Google sign in');
+      console.log("Google sign in");
       setLoading(true);
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: "select_account" });
       const result = await signInWithPopup(auth, provider);
       const firebaseUser = result.user;
-      console.log('Google Firebase success');
+      console.log("Google Firebase success");
     } catch (error: any) {
       console.error("Google sign in error:", error);
       throw new Error(getAuthErrorMessage(error.code));
@@ -366,7 +368,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (user) {
         const updatedUser = { ...user, ...data };
         setUser(updatedUser);
-        await secureStore.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
+        await secureStore.setItem(
+          USER_STORAGE_KEY,
+          JSON.stringify(updatedUser),
+        );
       }
     } catch (error: any) {
       console.error("Update profile error:", error);
@@ -429,4 +434,3 @@ function getAuthErrorMessage(code: string): string {
       return "An error occurred. Please try again";
   }
 }
-

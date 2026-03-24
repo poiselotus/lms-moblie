@@ -71,7 +71,10 @@ function RootLayoutNav() {
         <Stack.Screen name="complete-profile" />
         <Stack.Screen name="profile" />
         <Stack.Screen name="settings" />
-        <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+<Stack.Screen name="modal" options={{ presentation: "modal" }} />
+        <Stack.Screen name="select-role" />
+        <Stack.Screen name="student" />
+        <Stack.Screen name="instructor" />
       </Stack>
     </ThemeProvider>
   );

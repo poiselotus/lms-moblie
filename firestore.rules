@@ -28,37 +28,47 @@ service cloud.firestore {
       return role in ['student', 'instructor', 'admin'];
     }
     
-    function isValidUserData() {
+function isValidUserData() {
       let data = request.resource.data;
-      return data.keys().hasAll(['email', 'role', 'createdAt', 'updatedAt'])
-        && isValidEmail(data.email)
-        && isValidRole(data.role)
+      return data.keys().hasAll(['email', 'role', 'createdAt'])
         && data.email is string
+        && isValidEmail(data.email)
         && data.role is string
-        && data.displayName is string
-        && data.photoURL is string
+        && isValidRole(data.role)
+        && (data.displayName is string || data.displayName == null)
+        && (data.photoURL is string || data.photoURL == null)
         && (data.bio is string || data.bio == null)
-        && (data.role == 'student' || data.role == 'instructor' || data.role == 'admin');
+        && (data.profileCompleted is bool || data.profileCompleted == null)
+        && (data.emailVerified is bool || data.emailVerified == null);
     }
     
     // Users collection
-    match /users/{userId} {
+match /users/{userId} {
       // Public profile data (read-only)
       allow read: if true;
       
       // Users can read their own profile
       allow read: if isOwner(userId) || isAdmin();
       
-      // Users can only write their own profile
-      // Email must be verified for write operations
+      // Allow new users to create their profile (unverified OK)
       allow create: if isSignedIn() 
         && request.auth.uid == userId
         && isValidUserData();
       
+      // Updates require verification
       allow update: if isOwner(userId) 
+        && isEmailVerified()
         && isValidUserData();
       
       allow delete: if isAdmin();
+      
+      // Role-specific subcollections
+      match /{role}/{document=**} {
+        allow read, write: if isOwner(userId) 
+          && resource != null 
+          && resource.data.uid == request.auth.uid
+          && isValidRole(role);
+      }
       
       // Subcollection: User's enrolled courses
       match /enrolledCourses/{courseId} {

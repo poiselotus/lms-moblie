@@ -20,7 +20,7 @@ export default function RoleRouter() {
       setTimeout(() => {
         router.replace(path as any);
         setIsNavigating(false);
-      }, 500);
+      }, 100);
     },
     [isNavigating, pathname, router],
   );
@@ -34,14 +34,22 @@ export default function RoleRouter() {
       pathname,
     });
 
-    if (pathname?.startsWith("/(tabs)") || pathname === "/") return;
+    const isTabs = pathname?.startsWith("/(tabs)") || pathname === "/";
+    const isLogin = pathname === "/login";
+    const isVerifyEmail = pathname === "/verify-email";
+
+    if (isTabs || isLogin || isVerifyEmail) return;
 
     if (!user) {
       navigateSafely("/login");
     } else if (!user.emailVerified) {
       navigateSafely("/verify-email");
+    } else if (!user.role) {
+      navigateSafely("/select-role");
+    } else if (user.role === "student") {
+      navigateSafely("/student");
     } else {
-      navigateSafely("/(tabs)");
+      navigateSafely("/instructor");
     }
   }, [user?.uid, user?.emailVerified, loading, navigateSafely]);
 
