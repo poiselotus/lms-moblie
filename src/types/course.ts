@@ -52,32 +52,8 @@ export interface Review {
   createdAt: Date;
 }
 
-export interface Course {
-  id: string;
-  title: string;
-  description: string;
-  longDescription?: string;
-  instructorId: string;
-  instructorName: string;
-  instructorBio?: string;
-  category: string;
-  level: CourseLevel;
-  duration: number;
-  price: number;
-  thumbnail: string;
-  enrolledCount: number;
-  rating: number;
-  totalReviews: number;
-  createdAt: Date;
-  updatedAt: Date;
-  isFeatured: boolean;
-  isPublished: boolean;
-  lessonsCount?: number;
-  categoryName?: string;
-  requirements?: string[];
-  learningPoints?: string[];
-  sections?: Section[];
-}
+// Legacy types preserved for existing code compatibility
+// Use src/types/firestoreCourse.ts for new Firestore-aligned Course type
 
 export interface CourseFilter {
   category?: string;

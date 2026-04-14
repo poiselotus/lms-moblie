@@ -14,6 +14,7 @@ import "react-native-reanimated";
 import { useColorScheme } from "@/components/useColorScheme";
 import { AuthProvider } from "../src/context/AuthContext";
 import { ProfileProvider } from "../src/context/ProfileContext";
+import { StoreProvider } from "../src/store/Provider";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -50,7 +51,9 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <ProfileProvider>
-        <RootLayoutNav />
+        <StoreProvider>
+          <RootLayoutNav />
+        </StoreProvider>
       </ProfileProvider>
     </AuthProvider>
   );
@@ -71,7 +74,7 @@ function RootLayoutNav() {
         <Stack.Screen name="complete-profile" />
         <Stack.Screen name="profile" />
         <Stack.Screen name="settings" />
-<Stack.Screen name="modal" options={{ presentation: "modal" }} />
+        <Stack.Screen name="modal" options={{ presentation: "modal" }} />
         <Stack.Screen name="select-role" />
         <Stack.Screen name="student" />
         <Stack.Screen name="instructor" />
