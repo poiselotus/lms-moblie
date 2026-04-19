@@ -7,7 +7,7 @@ import {
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import "react-native-reanimated";
 
@@ -18,9 +18,7 @@ import { StoreProvider } from "../src/store/Provider";
 
 export { ErrorBoundary } from "expo-router";
 
-export const unstable_settings = {
-  initialRouteName: "roterouter",
-};
+// Removed SSR-unsafe initialRouteName - now uses file-based routing (tabs/index)
 
 SplashScreen.preventAutoHideAsync();
 
@@ -30,6 +28,8 @@ export default function RootLayout() {
     ...FontAwesome.font,
   });
 
+  const [isReady, setIsReady] = useState(false);
+
   useEffect(() => {
     if (error) throw error;
   }, [error]);
@@ -37,10 +37,12 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
+      // Client-side ready after fonts + mount
+      setIsReady(true);
     }
   }, [loaded]);
 
-  if (!loaded) {
+  if (!loaded || !isReady) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#6C63FF" />

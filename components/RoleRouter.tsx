@@ -1,3 +1,5 @@
+"use client";
+
 import { usePathname, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
@@ -5,6 +7,11 @@ import Colors from "../constants/Colors";
 import { useAuth } from "../src/context/AuthContext";
 
 export default function RoleRouter() {
+  // SSR-safe: Skip render on server
+  if (typeof window === "undefined") {
+    return null;
+  }
+
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();

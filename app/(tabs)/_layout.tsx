@@ -1,11 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Link, Tabs } from "expo-router";
 import React from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 
 import { useClientOnlyValue } from "@/components/useClientOnlyValue";
 import { useColorScheme } from "@/components/useColorScheme";
 import Colors from "@/constants/Colors";
+import { useAuth } from "@/src/context/AuthContext";
 
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof Ionicons>["name"];
@@ -26,6 +27,22 @@ function TabBarIcon(props: {
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator
+          size="large"
+          color={Colors[colorScheme ?? "light"].tint}
+        />
+      </View>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <Tabs
@@ -51,10 +68,10 @@ export default function TabLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name="home" color={color} focused={focused} />
+            <TabBarIcon name="home-outline" color={color} focused={focused} />
           ),
           headerRight: () => (
-            <Link href="/modal" asChild>
+            <Link href="/settings" asChild>
               <Pressable>
                 {({ pressed }) => (
                   <Ionicons
@@ -70,20 +87,48 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="two"
+        name="courses"
         options={{
-          title: "My Courses",
+          title: "Courses",
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name="book" color={color} focused={focused} />
+            <TabBarIcon
+              name="library-outline"
+              color={color}
+              focused={focused}
+            />
           ),
         }}
       />
+      <Tabs.Screen
+        name="my-courses"
+        options={{
+          title: "My Learning",
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon
+              name="play-circle-outline"
+              color={color}
+              focused={focused}
+            />
+          ),
+        }}
+      />
+      {user.role === "instructor" && (
+        <Tabs.Screen
+          name="dashboard"
+          options={{
+            title: "Dashboard",
+            tabBarIcon: ({ color, focused }) => (
+              <TabBarIcon name="grid-outline" color={color} focused={focused} />
+            ),
+          }}
+        />
+      )}
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name="person" color={color} focused={focused} />
+            <TabBarIcon name="person-outline" color={color} focused={focused} />
           ),
         }}
       />
@@ -92,6 +137,12 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
+  loaderContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
   iconContainer: {
     alignItems: "center",
   },

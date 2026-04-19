@@ -4,6 +4,7 @@ import React from "react";
 import {
   Dimensions,
   Image,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -66,8 +67,7 @@ export default function FeaturedCourseCard({
         )}
 
         {/* Progress indicator */}
-{/* Progress indicator - pass progress prop for featured courses with progress */}
-
+        {/* Progress indicator - pass progress prop for featured courses with progress */}
 
         {/* Play button */}
         <View style={styles.playButton}>
@@ -132,15 +132,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: "hidden",
     marginRight: 16,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
     elevation: 5,
-    ...(('web' as any) === 'web' ? { boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)' } : {}),
+    boxShadow:
+      Platform.OS === "web" ? "0 4px 12px rgba(0, 0, 0, 0.15)" : undefined,
   },
   progressIndicator: {
     position: "absolute",

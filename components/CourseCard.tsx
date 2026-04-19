@@ -1,7 +1,14 @@
 import Colors from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Image,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 interface CourseCardProps {
   title: string;
@@ -133,15 +140,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: "hidden",
     marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
     elevation: 3,
-    ...(('web' as any) === 'web' ? { boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)' } : {}),
+    boxShadow:
+      Platform.OS === "web" ? "0 2px 8px rgba(0, 0, 0, 0.1)" : undefined,
   },
   progressContainer: {
     position: "absolute",
