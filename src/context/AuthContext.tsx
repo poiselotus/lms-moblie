@@ -1,14 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import {
   createUserWithEmailAndPassword,
-  GoogleAuthProvider,
   onAuthStateChanged,
   sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
-  signInWithPopup,
   signOut,
   updateProfile,
 } from "firebase/auth";
@@ -26,7 +23,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { Alert } from "react-native";
+import { Alert, Platform } from "react-native";
 import { auth, db } from "../config/firebase";
 
 interface AuthUser {
@@ -63,7 +60,7 @@ const USER_STORAGE_KEY = "lms_user_data";
 // Universal storage adapter
 const storage = {
   async getItem(key: string): Promise<string | null> {
-    if (Platform.OS === 'web') {
+    if (Platform.OS === "web") {
       return AsyncStorage.getItem(key);
     }
     try {
@@ -75,7 +72,7 @@ const storage = {
   },
 
   async setItem(key: string, value: string): Promise<void> {
-    if (Platform.OS === 'web') {
+    if (Platform.OS === "web") {
       return AsyncStorage.setItem(key, value);
     }
     try {
@@ -87,7 +84,7 @@ const storage = {
   },
 
   async removeItem(key: string): Promise<void> {
-    if (Platform.OS === 'web') {
+    if (Platform.OS === "web") {
       return AsyncStorage.removeItem(key);
     }
     try {
@@ -105,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // SSR-safe: Skip Firebase on server
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       setLoading(false);
       return;
     }
@@ -116,7 +113,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (storedUserStr) {
           const storedUser = JSON.parse(storedUserStr);
           // Type guard for role
-          if (storedUser.role && ['student', 'instructor', 'admin'].includes(storedUser.role)) {
+          if (
+            storedUser.role &&
+            ["student", "instructor", "admin"].includes(storedUser.role)
+          ) {
             setUser(storedUser as AuthUser);
           }
         }
@@ -145,7 +145,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (userDoc.exists()) {
             userData = userDoc.data();
             const docRole = userData.role;
-            if (docRole && ['student', 'instructor', 'admin'].includes(docRole)) {
+            if (
+              docRole &&
+              ["student", "instructor", "admin"].includes(docRole)
+            ) {
               role = docRole as "student" | "instructor" | "admin";
             }
             console.log("User doc found:", role);
@@ -196,8 +199,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       unsubscribe();
     };
   }, []);
-
-  // ... rest of methods using storage.setItem, storage.removeItem, etc. replace secureStore with storage
 
   const promptRoleSelection = (uid: string, currentUser: AuthUser) => {
     Alert.alert(
@@ -325,21 +326,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
-    Alert.alert('Google Sign In', 'Coming soon for mobile. Use email/password for now.');
-    throw new Error('Google Sign-In not implemented for mobile yet');
+    Alert.alert(
+      "Google Sign In",
+      "Coming soon for mobile. Use email/password for now.",
+    );
+    throw new Error("Google Sign-In not implemented for mobile yet");
   };
 
   const signOutUser = async () => {
+    console.log("🔵 AUTH CONTEXT: signOutUser called");
+
     try {
-      setLoading(true);
+      // METHOD 1: Direct Firebase sign out
       await signOut(auth);
-      setUser(null);
+
+      console.log("🔵 Calling Firebase signOut directly...");
+      await signOut(auth);
+      console.log("🔵 Firebase signOut completed");
+
+      // Clear all storage
       await storage.removeItem(USER_STORAGE_KEY);
-    } catch (error: any) {
-      console.error("Sign out error:", error);
-      throw new Error(getAuthErrorMessage(error.code));
-    } finally {
+      console.log("🔵 Storage cleared");
+
+      // Clear all AsyncStorage
+      await AsyncStorage.clear();
+      console.log("🔵 AsyncStorage cleared");
+
+      // Clear localStorage for web
+      if (Platform.OS === "web") {
+        localStorage.clear();
+        sessionStorage.clear();
+        console.log("🔵 Web storage cleared");
+      }
+
+      // Clear state
+      setUser(null);
       setLoading(false);
+      console.log("🔵 User state cleared");
+    } catch (error) {
+      console.error("🔴 Sign out error:", error);
+      // Even if error, force clear local state
+      setUser(null);
+      setLoading(false);
+      await storage.removeItem(USER_STORAGE_KEY);
+      throw error;
     }
   };
 
@@ -380,10 +410,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (user) {
         const updatedUser = { ...user, ...data };
         setUser(updatedUser);
-        await storage.setItem(
-          USER_STORAGE_KEY,
-          JSON.stringify(updatedUser),
-        );
+        await storage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
       }
     } catch (error: any) {
       console.error("Update profile error:", error);

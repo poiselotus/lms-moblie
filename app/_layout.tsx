@@ -16,6 +16,12 @@ import { AuthProvider } from "../src/context/AuthContext";
 import { ProfileProvider } from "../src/context/ProfileContext";
 import { StoreProvider } from "../src/store/Provider";
 
+import { LogBox } from 'react-native';
+LogBox.ignoreLogs([
+  '[Layout children]: No route named',
+  'props.pointerEvents is deprecated',
+  'shadow* style props are deprecated',
+]);
 export { ErrorBoundary } from "expo-router";
 
 // Removed SSR-unsafe initialRouteName - now uses file-based routing (tabs/index)

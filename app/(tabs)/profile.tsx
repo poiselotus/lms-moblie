@@ -1,7 +1,7 @@
 import { router } from "expo-router";
+import { signOut as firebaseSignOut, getAuth } from "firebase/auth";
 import {
   Alert,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,23 +14,56 @@ export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const userRole = user?.role || "Student";
 
-  const handleSignOut = async () => {
-    Alert.alert("Sign Out", "Are you sure?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Sign Out",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await signOut();
-            router.replace("/login");
-          } catch (error) {
-            console.error("Sign out error:", error);
-            Alert.alert("Error", "Failed to sign out. Please try again.");
-          }
+  const handleSignOut = () => {
+    console.log("1️⃣ Sign out button pressed");
+    console.log("2️⃣ signOut function exists?", typeof signOut);
+
+    // FIXED: Use confirm() for web, Alert for native
+    if (typeof window !== "undefined" && window.confirm) {
+      // Web fallback
+      const confirmed = window.confirm("Are you sure you want to sign out?");
+      console.log("3️⃣ Web confirm result:", confirmed);
+      if (confirmed) {
+        performSignOut();
+      }
+    } else {
+      // Native Alert
+      Alert.alert("Sign Out", "Are you sure?", [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Sign Out",
+          style: "destructive",
+          onPress: () => {
+            console.log("3️⃣ Alert onPress triggered");
+            performSignOut();
+          },
         },
-      },
-    ]);
+      ]);
+    }
+  };
+
+  const performSignOut = async () => {
+    console.log("4️⃣ Starting sign out process");
+    try {
+      console.log("5️⃣ Calling context signOut...");
+      await signOut();
+      console.log("6️⃣ Context signOut completed");
+      console.log("7️⃣ Navigating to login...");
+      router.replace("/login");
+    } catch (contextError) {
+      console.error("8️⃣ Context signOut failed:", contextError);
+      console.log("9️⃣ Trying direct Firebase signOut...");
+      try {
+        const auth = getAuth();
+        await firebaseSignOut(auth);
+        console.log("🔟 Direct Firebase signOut successful");
+        localStorage.removeItem("lms_user_data");
+        router.replace("/login");
+      } catch (firebaseError) {
+        console.error("1️⃣1️⃣ Both signOut methods failed:", firebaseError);
+        alert("Failed to sign out. Please restart the app.");
+      }
+    }
   };
 
   return (
@@ -41,10 +74,13 @@ export default function ProfileScreen() {
       <View style={styles.card}>
         <Text style={styles.label}>Name</Text>
         <Text style={styles.value}>{user?.displayName || "Not set"}</Text>
+
         <Text style={styles.label}>Email</Text>
         <Text style={styles.value}>{user?.email}</Text>
+
         <Text style={styles.label}>Role</Text>
         <Text style={styles.value}>{userRole}</Text>
+
         <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
@@ -63,12 +99,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 12,
     elevation: 5,
-    boxShadow:
-      Platform.OS === "web" ? "0px 2px 4px rgba(0,0,0,0.1)" : undefined,
-    shadowColor: Platform.OS !== "web" ? "#000" : undefined,
-    shadowOffset: Platform.OS !== "web" ? { width: 0, height: 2 } : undefined,
-    shadowOpacity: Platform.OS !== "web" ? 0.25 : undefined,
-    shadowRadius: Platform.OS !== "web" ? 3.84 : undefined,
   },
   label: {
     fontSize: 14,
