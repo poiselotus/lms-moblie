@@ -19,6 +19,15 @@ interface AuthUser {
   displayName: string | null;
   photoURL: string | null;
   role: string;
+  bio?: string;
+  phone?: string;
+  notificationPreferences?: {
+    emailNotifications: boolean;
+    pushNotifications: boolean;
+    courseUpdates: boolean;
+    quizReminders: boolean;
+  };
+  language?: string;
 }
 
 interface AuthContextType {
@@ -28,6 +37,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, name: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
+  updateUserProfile: (data: Partial<AuthUser>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -39,19 +49,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     console.log("📌 Setting up auth listener");
 
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       console.log("📌 Auth state changed:", firebaseUser?.email || "null");
 
       if (firebaseUser) {
-        // Simplified - NO Firestore
-        const authUser: AuthUser = {
+        const uid = firebaseUser.uid;
+        const userDocRef = doc(db, "users", uid);
+        const userDoc = await getDoc(userDocRef);
+
+        const baseUser: AuthUser = {
           uid: firebaseUser.uid,
           email: firebaseUser.email,
-          displayName: firebaseUser.displayName,
+          displayName: firebaseUser.displayName || "Student",
           photoURL: firebaseUser.photoURL,
           role: "student",
         };
-        setUser(authUser);
+
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          setUser({
+            ...baseUser,
+            ...(data as Partial<AuthUser>),
+          });
+        } else {
+          setUser(baseUser);
+        }
       } else {
         setUser(null);
       }
@@ -139,9 +161,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateUserProfile = async (data: Partial<AuthUser>) => {
+    try {
+      if (!auth.currentUser) throw new Error("No user logged in");
+
+      const uid = auth.currentUser.uid;
+      await setDoc(doc(db, "users", uid), data, { merge: true });
+
+      // Update local state
+      if (user) {
+        setUser({ ...user, ...data });
+      }
+    } catch (error: any) {
+      console.error("Update profile error:", error);
+      throw new Error(getAuthErrorMessage(error.code || "unknown"));
+    }
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, loading, signIn, signUp, signInWithGoogle, signOut }}
+      value={{
+        user,
+        loading,
+        signIn,
+        signUp,
+        signInWithGoogle,
+        signOut,
+        updateUserProfile,
+      }}
     >
       {children}
     </AuthContext.Provider>

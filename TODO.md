@@ -1,10 +1,25 @@
-# AuthContext Google Sign-In Fix TODO
+# Profile & Settings Implementation TODO
 
-## Steps:
+## Phases (Priority Order):
 
-- [x] Step 1: Create/edit src/context/AuthContext.tsx with all changes (imports, utility, function, interface, context value)
-- [x] Step 2: Verify edits (read file back or test)
-- [x] Step 3: Test functionality (manual/user)
-- [x] Step 4: Complete task
+### Phase 1: Backend/Types (High Priority)
 
-Progress: All steps ✅ Completed. AuthContext updated with Google Sign-In support.
+- [x] Update src/types/user.ts (add phone, notificationPreferences, language)
+- [x] Update src/context/AuthContext.tsx (extend AuthUser, add updateUserProfile, load full profile)
+
+### Phase 2: Change Password (High Priority)
+
+- [x] Create app/change-password.tsx
+- [x] Add navigation link from profile
+
+### Phase 3: Profile UI (Medium Priority)
+
+- [x] Replace app/tabs/profile.tsx (tabs + edit form + notifications + language)
+
+### Phase 4: Test & Polish
+
+- [ ] Verify Firestore saves
+- [ ] Test UI flows
+- [ ] Complete
+
+**Progress:** Starting Phase 1...
