@@ -2,15 +2,9 @@ import { Stack } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
 import { AuthProvider, useAuth } from "../src/context/AuthContext";
 
-<<<<<<< Updated upstream
 // Separate component to handle conditional routing
 function RootLayoutContent() {
   const { user, loading } = useAuth();
-=======
-import useColorScheme from '@/hooks/useColorScheme';
-import { AuthProvider } from "../src/context/AuthContext";
-import { ProfileProvider } from "../src/context/ProfileContext";
->>>>>>> Stashed changes
 
   console.log("🎯 RootLayoutContent - loading:", loading, "user:", user?.email);
 
@@ -22,16 +16,18 @@ import { ProfileProvider } from "../src/context/ProfileContext";
     );
   }
 
-  // Use conditional groups - ONLY ONE navigator renders at a time
+  // If user is logged in, show tabs
   if (user) {
     console.log("🎯 User logged in - showing tabs");
     return (
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="tabs" />
+        <Stack.Screen name="change-password" />
       </Stack>
     );
   }
 
+  // If not logged in, show auth screens
   console.log("🎯 No user - showing auth screens");
   return (
     <Stack screenOptions={{ headerShown: false }}>
