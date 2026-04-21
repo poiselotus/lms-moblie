@@ -15,6 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Icon from "react-native-vector-icons/Ionicons";
 
 export default function ChangePasswordScreen() {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -109,7 +110,7 @@ export default function ChangePasswordScreen() {
             secureTextEntry={!showNew}
             value={newPassword}
             onChangeText={setNewPassword}
-            placeholder="Enter new password"
+            placeholder="Enter new password (min 6 characters)"
           />
           <TouchableOpacity onPress={() => setShowNew(!showNew)}>
             <Icon
@@ -155,10 +156,7 @@ export default function ChangePasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F3F4F6",
-  },
+  container: { flex: 1, backgroundColor: "#F3F4F6" },
   header: {
     backgroundColor: "#8B5CF6",
     padding: 24,
@@ -166,26 +164,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  backButton: {
-    marginRight: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-  },
+  backButton: { marginRight: 16, padding: 4 },
+  title: { fontSize: 20, fontWeight: "bold", color: "#FFFFFF" },
   card: {
     margin: 16,
     padding: 20,
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#6B7280",
-    marginBottom: 8,
-  },
+  label: { fontSize: 14, fontWeight: "500", color: "#6B7280", marginBottom: 8 },
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
@@ -195,11 +182,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginBottom: 16,
   },
-  input: {
-    flex: 1,
-    paddingVertical: 12,
-    fontSize: 16,
-  },
+  input: { flex: 1, paddingVertical: 12, fontSize: 16 },
   button: {
     backgroundColor: "#8B5CF6",
     padding: 14,
@@ -207,9 +190,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 8,
   },
-  buttonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-  },
+  buttonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
 });
