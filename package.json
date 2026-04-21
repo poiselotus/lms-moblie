@@ -17,7 +17,11 @@
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/netinfo": "~11.3.1",
     "@react-navigation/native": "^7.1.8",
+<<<<<<< Updated upstream
     "@reduxjs/toolkit": "^2.2.7",
+=======
+    "babel-plugin-module-resolver": "^5.0.3",
+>>>>>>> Stashed changes
     "expo": "~54.0.33",
     "expo-auth-session": "~7.0.10",
     "expo-constants": "~18.0.13",
