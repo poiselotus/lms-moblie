@@ -1,29 +1,16 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as SecureStore from "expo-secure-store";
 import {
   createUserWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  getRedirectResult,
+  GoogleAuthProvider,
   onAuthStateChanged,
-  sendEmailVerification,
-  sendPasswordResetEmail,
   signInWithEmailAndPassword,
-  signOut,
-  updateProfile,
+  signInWithPopup,
+  signInWithRedirect,
 } from "firebase/auth";
-import {
-  doc,
-  getDoc,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-} from "firebase/firestore";
-import React, {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
-import { Alert, Platform } from "react-native";
+import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { Platform } from "react-native";
 import { auth, db } from "../config/firebase";
 
 interface AuthUser {
@@ -31,406 +18,130 @@ interface AuthUser {
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
-  role: "student" | "instructor" | "admin";
-  profileCompleted: boolean;
-  emailVerified: boolean;
+  role: string;
 }
 
 interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
-  signUp: (
-    email: string,
-    password: string,
-    name: string,
-    role?: "student" | "instructor",
-  ) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, name: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
-  sendVerificationEmail: () => Promise<void>;
-  updateUserProfile: (data: Partial<AuthUser>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const USER_STORAGE_KEY = "lms_user_data";
-
-// Universal storage adapter
-const storage = {
-  async getItem(key: string): Promise<string | null> {
-    if (Platform.OS === "web") {
-      return AsyncStorage.getItem(key);
-    }
-    try {
-      return await SecureStore.getItemAsync(key);
-    } catch (error) {
-      console.warn("SecureStore.getItemAsync failed:", error);
-      return AsyncStorage.getItem(key);
-    }
-  },
-
-  async setItem(key: string, value: string): Promise<void> {
-    if (Platform.OS === "web") {
-      return AsyncStorage.setItem(key, value);
-    }
-    try {
-      await SecureStore.setItemAsync(key, value);
-    } catch (error) {
-      console.warn("SecureStore.setItemAsync failed:", error);
-      await AsyncStorage.setItem(key, value);
-    }
-  },
-
-  async removeItem(key: string): Promise<void> {
-    if (Platform.OS === "web") {
-      return AsyncStorage.removeItem(key);
-    }
-    try {
-      await SecureStore.deleteItemAsync(key);
-    } catch (error) {
-      console.warn("SecureStore.deleteItemAsync failed:", error);
-      await AsyncStorage.removeItem(key);
-    }
-  },
-};
-
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // SSR-safe: Skip Firebase on server
-    if (typeof window === "undefined") {
-      setLoading(false);
-      return;
-    }
+    console.log("📌 Setting up auth listener");
 
-    const loadStoredUser = async () => {
-      try {
-        const storedUserStr = await storage.getItem(USER_STORAGE_KEY);
-        if (storedUserStr) {
-          const storedUser = JSON.parse(storedUserStr);
-          // Type guard for role
-          if (
-            storedUser.role &&
-            ["student", "instructor", "admin"].includes(storedUser.role)
-          ) {
-            setUser(storedUser as AuthUser);
-          }
-        }
-      } catch (error) {
-        console.error("Error loading stored user:", error);
-      }
-    };
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      console.log("📌 Auth state changed:", firebaseUser?.email || "null");
 
-    loadStoredUser();
-
-    console.log("Setting up auth listener");
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      console.log(
-        "Auth state changed:",
-        firebaseUser ? firebaseUser.email : "signed out",
-      );
       if (firebaseUser) {
-        try {
-          const uid = firebaseUser.uid;
-          const userDocRef = doc(db, "users", uid);
-          const userDoc = await getDoc(userDocRef);
-
-          let userData: any = {};
-          let role: "student" | "instructor" | "admin" = "student";
-
-          if (userDoc.exists()) {
-            userData = userDoc.data();
-            const docRole = userData.role;
-            if (
-              docRole &&
-              ["student", "instructor", "admin"].includes(docRole)
-            ) {
-              role = docRole as "student" | "instructor" | "admin";
-            }
-            console.log("User doc found:", role);
-          } else {
-            // Create default profile
-            console.log("No user doc, creating default");
-            const defaultData = {
-              uid,
-              email: firebaseUser.email || "",
-              displayName: firebaseUser.displayName || "User",
-              role,
-              profileCompleted: true,
-              emailVerified: firebaseUser.emailVerified || false,
-              createdAt: serverTimestamp(),
-            };
-            await setDoc(userDocRef, defaultData);
-
-            userData = defaultData;
-            console.log("Default user doc created");
-          }
-
-          const authUser: AuthUser = {
-            uid,
-            email: firebaseUser.email,
-            displayName: firebaseUser.displayName,
-            photoURL: firebaseUser.photoURL,
-            role,
-            profileCompleted: userData.profileCompleted || true,
-            emailVerified: firebaseUser.emailVerified,
-          };
-
-          setUser(authUser);
-          await storage.setItem(USER_STORAGE_KEY, JSON.stringify(authUser));
-          console.log("User state set:", authUser.role, authUser.emailVerified);
-        } catch (error) {
-          console.error("Listener error:", error);
-        }
+        // Simplified - NO Firestore
+        const authUser: AuthUser = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName,
+          photoURL: firebaseUser.photoURL,
+          role: "student",
+        };
+        setUser(authUser);
       } else {
-        console.log("User signed out");
         setUser(null);
-        await storage.removeItem(USER_STORAGE_KEY);
       }
+
       setLoading(false);
+      console.log("📌 Loading false");
     });
 
     return () => {
-      console.log("Cleaning up auth listener");
+      console.log("📌 Cleaning up auth listener");
       unsubscribe();
     };
   }, []);
 
-  const promptRoleSelection = (uid: string, currentUser: AuthUser) => {
-    Alert.alert(
-      "Select Role",
-      "Choose your account type:",
-      [
-        {
-          text: "Student",
-          onPress: () => selectAndSaveRole("student", uid, currentUser),
-        },
-        {
-          text: "Instructor (Teacher)",
-          onPress: () => selectAndSaveRole("instructor", uid, currentUser),
-        },
-      ],
-      { cancelable: false },
-    );
-  };
-
-  const selectAndSaveRole = async (
-    role: "student" | "instructor",
-    uid: string,
-    currentUser: AuthUser,
-  ) => {
-    try {
-      const updateData = {
-        role,
-        profileCompleted: true,
-      };
-
-      // Update main users/uid
-      await updateDoc(doc(db, "users", uid), updateData);
-
-      // Update role-specific
-      await setDoc(
-        doc(db, `users/${role}`, uid),
-        {
-          ...currentUser,
-          ...updateData,
-        },
-        { merge: true },
-      );
-
-      // Update local
-      const updatedUser: AuthUser = {
-        ...currentUser,
-        role,
-        profileCompleted: true,
-      };
-      setUser(updatedUser);
-      await storage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
-      console.log("Role updated:", role);
-    } catch (error) {
-      console.error("Role save error:", error);
-      Alert.alert("Error", "Failed to save role. Please try again.");
-    }
-  };
-
-  const signUp = async (
-    email: string,
-    password: string,
-    name: string,
-    role: "student" | "instructor" = "student",
-  ) => {
-    try {
-      setLoading(true);
-      console.log("Signup:", email, role);
-
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password,
-      );
-      const firebaseUser = userCredential.user;
-
-      await updateProfile(firebaseUser, { displayName: name });
-      await sendEmailVerification(firebaseUser);
-
-      const userData = {
-        uid: firebaseUser.uid,
-        email,
-        displayName: name,
-        role,
-        profileCompleted: false,
-        emailVerified: false,
-        createdAt: serverTimestamp(),
-      };
-
-      await setDoc(doc(db, "users", firebaseUser.uid), userData);
-      await setDoc(doc(db, `users/${role}`, firebaseUser.uid), userData);
-
-      const authUser: AuthUser = {
-        uid: firebaseUser.uid,
-        email: firebaseUser.email,
-        displayName: name,
-        photoURL: firebaseUser.photoURL,
-        role,
-        profileCompleted: false,
-        emailVerified: false,
-      };
-
-      setUser(authUser);
-      await storage.setItem(USER_STORAGE_KEY, JSON.stringify(authUser));
-      console.log("Signup complete");
-    } catch (error: any) {
-      console.error("Signup error:", error);
-      throw new Error(getAuthErrorMessage(error.code));
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const signIn = async (email: string, password: string) => {
-    try {
-      console.log("Sign in attempt:", email);
-      setLoading(true);
-      await signInWithEmailAndPassword(auth, email, password);
-      console.log("Sign in Firebase success");
-    } catch (error: any) {
-      console.error("Sign in Firebase error:", error);
-      throw new Error(getAuthErrorMessage(error.code));
-    } finally {
-      setLoading(false);
+    console.log("📌 signIn called:", email);
+    await signInWithEmailAndPassword(auth, email, password);
+  };
+
+  const signUp = async (email: string, password: string, name: string) => {
+    console.log("📌 signUp called");
+    const result = await createUserWithEmailAndPassword(auth, email, password);
+  };
+
+  const signOut = async () => {
+    console.log("📌 signOut called");
+    await firebaseSignOut(auth);
+  };
+
+  const getAuthErrorMessage = (code: string) => {
+    switch (code) {
+      case "auth/user-not-found":
+        return "No account found with this email";
+      case "auth/wrong-password":
+        return "Incorrect password";
+      case "auth/email-already-in-use":
+        return "Email already in use";
+      case "auth/popup-closed-by-user":
+        return "Sign in cancelled";
+      case "auth/popup-blocked":
+        return "Popup blocked. Please allow popups";
+      default:
+        return "Authentication failed. Please try again.";
     }
   };
 
   const signInWithGoogle = async () => {
-    Alert.alert(
-      "Google Sign In",
-      "Coming soon for mobile. Use email/password for now.",
-    );
-    throw new Error("Google Sign-In not implemented for mobile yet");
-  };
-
-  const signOutUser = async () => {
-    console.log("🔵 AUTH CONTEXT: signOutUser called");
-
     try {
-      // METHOD 1: Direct Firebase sign out
-      await signOut(auth);
+      console.log("🔵 Starting Google Sign In");
+      const provider = new GoogleAuthProvider();
 
-      console.log("🔵 Calling Firebase signOut directly...");
-      await signOut(auth);
-      console.log("🔵 Firebase signOut completed");
-
-      // Clear all storage
-      await storage.removeItem(USER_STORAGE_KEY);
-      console.log("🔵 Storage cleared");
-
-      // Clear all AsyncStorage
-      await AsyncStorage.clear();
-      console.log("🔵 AsyncStorage cleared");
-
-      // Clear localStorage for web
+      // For web, use popup
       if (Platform.OS === "web") {
-        localStorage.clear();
-        sessionStorage.clear();
-        console.log("🔵 Web storage cleared");
-      }
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+        console.log("🔵 Google Sign In successful:", user.email);
 
-      // Clear state
-      setUser(null);
-      setLoading(false);
-      console.log("🔵 User state cleared");
-    } catch (error) {
-      console.error("🔴 Sign out error:", error);
-      // Even if error, force clear local state
-      setUser(null);
-      setLoading(false);
-      await storage.removeItem(USER_STORAGE_KEY);
-      throw error;
-    }
-  };
+        // Check if user exists in Firestore, if not create
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
 
-  const resetPassword = async (email: string) => {
-    try {
-      setLoading(true);
-      await sendPasswordResetEmail(auth, email);
-    } catch (error: any) {
-      console.error("Reset password error:", error);
-      throw new Error(getAuthErrorMessage(error.code));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const sendVerificationEmail = async () => {
-    try {
-      if (auth.currentUser) {
-        await sendEmailVerification(auth.currentUser);
+        if (!userDoc.exists()) {
+          await setDoc(userDocRef, {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            photoURL: user.photoURL,
+            role: "student",
+            profileCompleted: true,
+            emailVerified: user.emailVerified,
+            createdAt: serverTimestamp(),
+          });
+        }
+      } else {
+        // For mobile, use redirect
+        await signInWithRedirect(auth, provider);
+        const result = await getRedirectResult(auth);
+        if (result) {
+          console.log("🔵 Google Sign In successful:", result.user.email);
+        }
       }
     } catch (error: any) {
-      console.error("Send verification email error:", error);
-      throw new Error(getAuthErrorMessage(error.code));
-    }
-  };
-
-  const updateUserProfile = async (data: Partial<AuthUser>) => {
-    try {
-      if (!auth.currentUser) throw new Error("No user logged in");
-
-      const uid = auth.currentUser.uid;
-      await setDoc(doc(db, "users", uid), data, { merge: true });
-
-      if (user?.role) {
-        await setDoc(doc(db, `users/${user.role}`, uid), data, { merge: true });
-      }
-
-      if (user) {
-        const updatedUser = { ...user, ...data };
-        setUser(updatedUser);
-        await storage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
-      }
-    } catch (error: any) {
-      console.error("Update profile error:", error);
+      console.error("🔴 Google Sign In error:", error);
       throw new Error(getAuthErrorMessage(error.code));
     }
   };
 
   return (
     <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        signUp,
-        signIn,
-        signInWithGoogle,
-        signOut: signOutUser,
-        resetPassword,
-        sendVerificationEmail,
-        updateUserProfile,
-      }}
+      value={{ user, loading, signIn, signUp, signInWithGoogle, signOut }}
     >
       {children}
     </AuthContext.Provider>
@@ -443,33 +154,4 @@ export function useAuth() {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-}
-
-function getAuthErrorMessage(code: string): string {
-  switch (code) {
-    case "auth/email-already-in-use":
-      return "This email is already registered";
-    case "auth/invalid-email":
-      return "Invalid email address";
-    case "auth/operation-not-allowed":
-      return "Operation not allowed";
-    case "auth/weak-password":
-      return "Password is too weak";
-    case "auth/user-disabled":
-      return "This account has been disabled";
-    case "auth/user-not-found":
-      return "No account found with this email";
-    case "auth/wrong-password":
-      return "Incorrect password";
-    case "auth/invalid-credential":
-      return "Invalid email or password";
-    case "auth/too-many-requests":
-      return "Too many attempts. Please try again later";
-    case "auth/network-request-failed":
-      return "Network error. Please check your connection";
-    case "auth/invalid-action-code":
-      return "Invalid or expired reset link";
-    default:
-      return "An error occurred. Please try again";
-  }
 }

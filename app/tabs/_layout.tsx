@@ -1,9 +1,5 @@
-import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { StyleSheet } from "react-native";
-
-// NO conditional hooks, NO useAuth, NO useState, NO conditional rendering
-// Keep it PURE and SIMPLE
+import Icon from "react-native-vector-icons/Ionicons";
 
 export default function TabLayout() {
   return (
@@ -11,7 +7,6 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: "#8B5CF6",
         tabBarInactiveTintColor: "#9CA3AF",
-        tabBarStyle: styles.tabBar,
         headerShown: false,
       }}
     >
@@ -20,7 +15,7 @@ export default function TabLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
+            <Icon name="home-outline" size={size} color={color} />
           ),
         }}
       />
@@ -29,21 +24,10 @@ export default function TabLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
+            <Icon name="person-outline" size={size} color={color} />
           ),
         }}
       />
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  tabBar: {
-    backgroundColor: "#FFFFFF",
-    borderTopWidth: 1,
-    borderTopColor: "#E5E7EB",
-    height: 60,
-    paddingBottom: 8,
-    paddingTop: 8,
-  },
-});

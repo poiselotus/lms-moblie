@@ -16,7 +16,16 @@ import {
 import Colors from "../constants/Colors";
 import { useAuth } from "../src/context/AuthContext";
 
+import { Redirect } from "expo-router";
+
 export default function LoginScreen() {
+  const { user, loading: authLoading } = useAuth();
+
+  // If already logged in, redirect to tabs
+  if (!authLoading && user) {
+    return <Redirect href="/tabs" />;
+  }
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -44,27 +53,46 @@ export default function LoginScreen() {
   };
 
   const handleSignIn = async () => {
-    if (!validateForm()) return;
+    console.log("1️⃣ Sign In button pressed");
+    console.log("2️⃣ Email:", email);
+    console.log("3️⃣ Password length:", password.length);
 
+    const isValid = validateForm();
+    console.log("4️⃣ Form valid:", isValid);
+
+    if (!isValid) {
+      console.log("5️⃣ Form validation failed");
+      return;
+    }
+
+    console.log("6️⃣ Setting loading to true");
     setLoading(true);
+
     try {
+      console.log("7️⃣ Calling signIn with:", email.trim());
       await signIn(email.trim(), password);
+      console.log("8️⃣ Sign in successful - should navigate");
     } catch (error: any) {
+      console.error("9️⃣ Sign in error:", error.message);
       Alert.alert("Error", error.message);
     } finally {
+      console.log("🔟 Setting loading to false");
       setLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
+    console.log("🟢 Google sign in pressed");
     try {
       await signInWithGoogle();
     } catch (error: any) {
+      console.error("🟡 Google sign in error:", error.message);
       Alert.alert("Error", error.message);
     }
   };
 
   const handleForgotPassword = () => {
+    console.log("🔗 Forgot password pressed");
     router.push("/forgot-password");
   };
 

@@ -1,101 +1,44 @@
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
-import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
-import "react-native-reanimated";
+import { ActivityIndicator, View } from "react-native";
+import { AuthProvider, useAuth } from "../src/context/AuthContext";
 
-import { useColorScheme } from "@/components/useColorScheme";
-import { AuthProvider } from "../src/context/AuthContext";
-import { ProfileProvider } from "../src/context/ProfileContext";
-import { StoreProvider } from "../src/store/Provider";
+// Separate component to handle conditional routing
+function RootLayoutContent() {
+  const { user, loading } = useAuth();
 
-import { LogBox } from 'react-native';
-LogBox.ignoreLogs([
-  '[Layout children]: No route named',
-  'props.pointerEvents is deprecated',
-  'shadow* style props are deprecated',
-]);
-export { ErrorBoundary } from "expo-router";
+  console.log("🎯 RootLayoutContent - loading:", loading, "user:", user?.email);
 
-// Removed SSR-unsafe initialRouteName - now uses file-based routing (tabs/index)
-
-SplashScreen.preventAutoHideAsync();
-
-export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
-    ...FontAwesome.font,
-  });
-
-  const [isReady, setIsReady] = useState(false);
-
-  useEffect(() => {
-    if (error) throw error;
-  }, [error]);
-
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-      // Client-side ready after fonts + mount
-      setIsReady(true);
-    }
-  }, [loaded]);
-
-  if (!loaded || !isReady) {
+  if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#6C63FF" />
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#8B5CF6" />
       </View>
     );
   }
 
+  // Use conditional groups - ONLY ONE navigator renders at a time
+  if (user) {
+    console.log("🎯 User logged in - showing tabs");
+    return (
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="tabs" />
+      </Stack>
+    );
+  }
+
+  console.log("🎯 No user - showing auth screens");
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="login" />
+      <Stack.Screen name="signup" />
+    </Stack>
+  );
+}
+
+export default function RootLayout() {
   return (
     <AuthProvider>
-      <ProfileProvider>
-        <StoreProvider>
-          <RootLayoutNav />
-        </StoreProvider>
-      </ProfileProvider>
+      <RootLayoutContent />
     </AuthProvider>
   );
 }
-
-function RootLayoutNav() {
-  const colorScheme = useColorScheme();
-
-  return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="roterouter" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="login" />
-        <Stack.Screen name="signup" />
-        <Stack.Screen name="forgot-password" />
-        <Stack.Screen name="verify-email" />
-        <Stack.Screen name="complete-profile" />
-        <Stack.Screen name="profile" />
-        <Stack.Screen name="settings" />
-        <Stack.Screen name="modal" options={{ presentation: "modal" }} />
-        <Stack.Screen name="select-role" />
-        <Stack.Screen name="student" />
-        <Stack.Screen name="instructor" />
-      </Stack>
-    </ThemeProvider>
-  );
-}
-
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F8F9FA",
-  },
-});

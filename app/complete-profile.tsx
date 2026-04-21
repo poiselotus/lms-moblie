@@ -47,7 +47,7 @@ export default function CompleteProfileScreen() {
         profileCompleted: true,
         // Note: In a real app, you'd also upload avatar to Firebase Storage
       });
-      router.replace("/(tabs)");
+      router.replace("/tabs");
     } catch (error: any) {
       Alert.alert("Error", error.message);
     } finally {
@@ -212,7 +212,7 @@ export default function CompleteProfileScreen() {
           {/* Skip for now */}
           <Pressable
             style={styles.skipButton}
-            onPress={() => router.replace("/(tabs)")}
+            onPress={() => router.replace("/tabs")}
           >
             <Text
               style={[

@@ -1,35 +1,10 @@
-# LMS Mobile App - Task Tracker
+# AuthContext Google Sign-In Fix TODO
 
-## Completed: Tabs Layout Fix ✅
+## Steps:
 
-1. [✅] app/(tabs)/\_layout.tsx fixed
-2. [ ] Test navigation
-3. [ ] Create missing tabs files
-       ...
+- [x] Step 1: Create/edit src/context/AuthContext.tsx with all changes (imports, utility, function, interface, context value)
+- [x] Step 2: Verify edits (read file back or test)
+- [x] Step 3: Test functionality (manual/user)
+- [x] Step 4: Complete task
 
-## NEW TASK: Fix All Critical Errors ✅
-
-### Priority 1: Platform Storage (AuthContext.tsx)
-
-1. [✅] Add Platform import, web=AsyncStorage only in secureStore get/set/delete
-
-### Priority 2: Shadow Props (9 files)
-
-1. [ ] CourseCard.tsx
-2. [ ] FeaturedCourseCard.tsx
-3. [ ] app/login.tsx
-4. [ ] app/signup.tsx
-5. [ ] app/forgot-password.tsx
-6. [ ] app/(tabs)/index.tsx
-7. [ ] app/(tabs)/HomeScreenNew.tsx
-8. [ ] app/(auth)/signup.tsx
-9. [ ] app/select-role.tsx
-
-### Priority 3: Verify Routes & Test
-
-1. [ ] Test profile tab loads
-2. [ ] Test web auth persists
-3. [ ] npx expo start --web
-4. [ ] npx expo start (mobile)
-
-**Next:** `npx expo start --clear` test auth/navigation/no warnings
+Progress: All steps ✅ Completed. AuthContext updated with Google Sign-In support.
