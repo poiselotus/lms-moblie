@@ -1,117 +1,7 @@
 {
   "indexes": [
     {
-      "collectionGroup": "courses",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "category",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "courses",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "instructorId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "courses",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "isFeatured",
-          "order": "DESCENDING"
-        },
-        {
-          "fieldPath": "rating",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "courses",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "isPublished",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "category",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "courses",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "isPublished",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "level",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "courses",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "isPublished",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "rating",
-          "order": "DESCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "reviews",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "courseId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "enrolledCourses",
+      "collectionGroup": "enrollments",
       "queryScope": "COLLECTION",
       "fields": [
         {
@@ -119,25 +9,62 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "enrolledAt",
+          "fieldPath": "isActive",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "lastAccessedAt",
           "order": "DESCENDING"
         }
       ]
     },
     {
-      "collectionGroup": "lessons",
+      "collectionGroup": "enrollments",
       "queryScope": "COLLECTION",
       "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
         {
           "fieldPath": "courseId",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "order",
+          "fieldPath": "isActive",
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "lessonProgress",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "enrollmentId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "lastWatchedAt",
+          "order": "DESCENDING"
+        }
+      ]
     }
-  ],
-  "fieldOverrides": []
+  ]
 }
+  - collectionGroup: enrollments
+    queryScope: COLLECTION
+    fields:
+      - fieldPath: userId
+        order: ASCENDING
+      - fieldPath: courseId
+        order: ASCENDING
+      - fieldPath: isActive
+        order: ASCENDING
+  - collectionGroup: lessonProgress
+    queryScope: COLLECTION
+    fields:
+      - fieldPath: enrollmentId
+        order: ASCENDING
+      - fieldPath: lastWatchedAt
+        order: DESCENDING

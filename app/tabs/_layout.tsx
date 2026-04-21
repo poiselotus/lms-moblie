@@ -28,6 +28,15 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="my-courses"
+        options={{
+          title: "My Courses",
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="book-outline" size={size} color={color} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }
