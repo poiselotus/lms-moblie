@@ -8,29 +8,85 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Icon from "react-native-vector-icons/Ionicons";
 import { useAuth } from "../../src/context/AuthContext";
 
-// Temporary EnrollmentService placeholder
-const getEnrollments = async (userId) => {
+// Simple icon component using emoji/unicode instead of vector-icons
+interface SimpleIconProps {
+  name: string;
+  size?: number;
+  color?: string;
+}
+
+const SimpleIcon: React.FC<SimpleIconProps> = ({
+  name,
+  size = 24,
+  color = "#6B7280",
+}) => {
+  const iconMap: Record<string, string> = {
+    "book-outline": "📚",
+    "chevron-forward": "→",
+    "library-outline": "📚",
+    "person-outline": "👤",
+    "home-outline": "🏠",
+    "play-circle-outline": "▶️",
+    "checkmark-circle": "✅",
+    "checkmark-circle-outline": "◯",
+    "time-outline": "⏱️",
+    "people-outline": "👥",
+    "star-outline": "⭐",
+    "log-out-outline": "🚪",
+    "create-outline": "✏️",
+    "notifications-outline": "🔔",
+    "language-outline": "🌐",
+    "lock-closed-outline": "🔒",
+    "arrow-back": "←",
+    "eye-outline": "👁️",
+    "eye-off-outline": "👁️‍🗨️",
+    close: "✕",
+    "search-outline": "🔍",
+    "options-outline": "⚙️",
+    "grid-outline": "⊞",
+    "briefcase-outline": "💼",
+    "bar-chart-outline": "📊",
+    "color-palette-outline": "🎨",
+    "megaphone-outline": "📢",
+    "code-outline": "</>",
+  };
+
+  return (
+    <Text style={{ fontSize: size, color, textAlign: "center" }}>
+      {iconMap[name as keyof typeof iconMap] || "📖"}
+    </Text>
+  );
+};
+
+// Temporary placeholder for enrollment data
+const getEnrollments = async (userId: string): Promise<any[]> => {
+  console.log("Fetching enrollments for:", userId);
   return [];
 };
 
+interface Course {
+  id: string;
+  instructorName?: string;
+  progress?: number;
+}
+
 export default function MyCoursesScreen() {
   const { user } = useAuth();
-  const [enrolledCourses, setEnrolledCourses] = useState([]);
+  const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
+    if (user?.uid) {
       fetchEnrolledCourses();
     }
-  }, [user]);
+  }, [user?.uid]);
 
   const fetchEnrolledCourses = async () => {
     try {
       setLoading(true);
-      const enrollments = await getEnrollments(user.uid);
+      const enrollments = await getEnrollments(user!.uid);
       setEnrolledCourses([]);
     } catch (error) {
       console.error("Error fetching enrolled courses:", error);
@@ -39,12 +95,12 @@ export default function MyCoursesScreen() {
     }
   };
 
-  const formatCourseTitle = (id) => {
+  const formatCourseTitle = (id: string): string => {
     if (!id) return "Course";
     return id
       .replace(/^course_/, "")
       .split("_")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
   };
 
@@ -65,7 +121,7 @@ export default function MyCoursesScreen() {
 
       {enrolledCourses.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Icon name="book-outline" size={64} color="#D1D5DB" />
+          <SimpleIcon name="book-outline" size={64} color="#D1D5DB" />
           <Text style={styles.emptyTitle}>No courses yet</Text>
           <Text style={styles.emptyText}>
             Enroll in a course to start learning
@@ -82,10 +138,10 @@ export default function MyCoursesScreen() {
           <TouchableOpacity
             key={course.id}
             style={styles.courseCard}
-            onPress={() => router.push(`/course/${course.id}`)}
+            onPress={() => router.push(`/course/${course.id}/content`)}
           >
             <View style={styles.courseImage}>
-              <Icon name="book-outline" size={32} color="#8B5CF6" />
+              <SimpleIcon name="book-outline" size={32} color="#8B5CF6" />
             </View>
             <View style={styles.courseInfo}>
               <Text style={styles.courseTitle}>
@@ -108,7 +164,7 @@ export default function MyCoursesScreen() {
                 </Text>
               </View>
             </View>
-            <Icon name="chevron-forward" size={20} color="#9CA3AF" />
+            <SimpleIcon name="chevron-forward" size={20} color="#9CA3AF" />
           </TouchableOpacity>
         ))
       )}
