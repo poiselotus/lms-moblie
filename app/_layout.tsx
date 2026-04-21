@@ -2,15 +2,9 @@ import { Stack } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
 import { AuthProvider, useAuth } from "../src/context/AuthContext";
 
-<<<<<<< Updated upstream
 // Separate component to handle conditional routing
 function RootLayoutContent() {
   const { user, loading } = useAuth();
-=======
-import useColorScheme from '@/hooks/useColorScheme';
-import { AuthProvider } from "../src/context/AuthContext";
-import { ProfileProvider } from "../src/context/ProfileContext";
->>>>>>> Stashed changes
 
   console.log("🎯 RootLayoutContent - loading:", loading, "user:", user?.email);
 
