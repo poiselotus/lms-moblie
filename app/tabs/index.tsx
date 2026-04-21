@@ -14,11 +14,15 @@ import {
 import Icon from "react-native-vector-icons/Ionicons";
 import { db } from "../../src/config/firebase";
 
+import { useAuth } from "../../src/context/AuthContext";
+
 export default function HomeScreen() {
   const [categories, setCategories] = useState([]);
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchData();
@@ -89,7 +93,9 @@ export default function HomeScreen() {
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <Text style={styles.welcomeText}>Welcome back,</Text>
-        <Text style={styles.userName}>Poise lotus!</Text>
+        <Text style={styles.userName}>
+          {user?.displayName || user?.email?.split("@")[0] || "Learner"}!
+        </Text>
         <Text style={styles.headerSubtitle}>
           Continue your learning journey
         </Text>

@@ -1,11 +1,15 @@
-# Course Enrollment TODO
+# Fix 'user is not defined' error in app/tabs/index.tsx - COMPLETED ✅
 
 ## Steps:
 
-- [ ] Step 1: Update app/course/[id].tsx - Add EnrollmentService integration, enrollment button, confirmation modal
-- [ ] Step 2: Create/Update app/tabs/my-courses.tsx - List enrolled courses with progress
-- [ ] Step 3: Update app/tabs/\_layout.tsx - Add My Courses tab
-- [ ] Step 4: Add Firestore security rules/indexes for enrollments
-- [ ] Step 5: Test enrollment flow (preview → enroll → my-courses → content)
+- [x] 1. Create TODO.md
+- [x] 2. Add import { useAuth } from '../../src/context/AuthContext';
+- [x] 3. Add const { user } = useAuth(); in HomeScreen
+- [x] 4. Update TODO.md
+- [x] 5. Test app and complete
 
-Progress: All steps ✅ Complete. Indexes created, enrollment flow ready.
+Changes applied to app/tabs/index.tsx:
+
+- Added import after firebase db import
+- Added hook after searchQuery state
+- Error fixed: user now defined from AuthContext
