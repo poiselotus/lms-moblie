@@ -150,7 +150,9 @@ export default function CoursePreviewScreen() {
         <View style={styles.priceCard}>
           <Text style={styles.priceLabel}>Course Price</Text>
           <Text style={styles.priceValue}>
-            {course.isFree ? "Free" : "$49.99"}
+            {course.isFree
+              ? "Free"
+              : `₦${((course.price || 49.99) * 1500).toLocaleString()}`}
           </Text>
           {!course.isFree && (
             <Text style={styles.priceNote}>

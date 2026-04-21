@@ -180,7 +180,9 @@ export default function HomeScreen() {
                   style={[styles.priceBadge, course.isFree && styles.freeBadge]}
                 >
                   <Text style={styles.priceText}>
-                    {course.isFree ? "Free" : "Paid"}
+                    {course.isFree
+                      ? "Free"
+                      : `₦${((course.price || 49.99) * 1500).toLocaleString()}`}
                   </Text>
                 </View>
               </View>
