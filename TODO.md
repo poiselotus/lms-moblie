@@ -1,15 +1,28 @@
-# Fix 'user is not defined' error in app/tabs/index.tsx - COMPLETED ✅
+# Enrollment Feature Implementation
 
-## Steps:
+## [x] Step 1: Create TODO.md tracking file ✅
 
-- [x] 1. Create TODO.md
-- [x] 2. Add import { useAuth } from '../../src/context/AuthContext';
-- [x] 3. Add const { user } = useAuth(); in HomeScreen
-- [x] 4. Update TODO.md
-- [x] 5. Test app and complete
+_Completed: Structured implementation steps_
 
-Changes applied to app/tabs/index.tsx:
+## [✅] Step 2: Replace src/services/EnrollmentService.ts
 
-- Added import after firebase db import
-- Added hook after searchQuery state
-- Error fixed: user now defined from AuthContext
+_Replaced with simpler object service that returns boolean and increments enrolledCount_ ✅
+
+## [✅] Step 3: Update app/course/[id].tsx
+
+- Added Alert and EnrollmentService imports ✅
+- Added enrolling state ✅
+- Added initial enrollment status check ✅
+- Replaced fake handleEnroll with real async logic ✅
+- Updated enroll button (loading/disabled states) ✅
+- Removed fake enrollment modal state and JSX ✅
+
+## [ ] Step 4: Verify changes and test
+
+- Read updated files
+- Suggest test command (login → course → enroll)
+
+## [ ] Step 5: Final completion
+
+- Update TODO.md as ✅
+- attempt_completion

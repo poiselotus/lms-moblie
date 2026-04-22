@@ -4,6 +4,8 @@ import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,6 +14,7 @@ import {
 } from "react-native";
 import { db } from "../../src/config/firebase";
 import { useAuth } from "../../src/context/AuthContext";
+import { EnrollmentService } from "../../src/services/EnrollmentService";
 
 export default function CoursePreviewScreen() {
   const { id } = useLocalSearchParams();
@@ -19,11 +22,25 @@ export default function CoursePreviewScreen() {
   const [course, setCourse] = useState(null);
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [enrolling, setEnrolling] = useState(false);
   const [isEnrolled, setIsEnrolled] = useState(false);
 
   useEffect(() => {
     fetchCourseDetails();
   }, [id]);
+
+  useEffect(() => {
+    const checkEnrollment = async () => {
+      if (user && id) {
+        const enrolled = await EnrollmentService.checkEnrollmentStatus(
+          user.uid,
+          id,
+        );
+        setIsEnrolled(enrolled);
+      }
+    };
+    checkEnrollment();
+  }, [user, id]);
 
   const fetchCourseDetails = async () => {
     try {
@@ -68,8 +85,40 @@ export default function CoursePreviewScreen() {
     return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
   };
 
-  const handleEnroll = () => {
-    Alert.alert("Enroll", "Enrollment feature coming soon");
+  const handleEnroll = async () => {
+    if (!user) {
+      Alert.alert("Login Required", "Please login to enroll in this course", [
+        { text: "Cancel", style: "cancel" },
+        { text: "Login", onPress: () => router.push("/login") },
+      ]);
+      return;
+    }
+
+    setEnrolling(true);
+    try {
+      const success = await EnrollmentService.enrollInCourse(user.uid, id);
+      if (success) {
+        setIsEnrolled(true);
+        Alert.alert(
+          "Success!",
+          "You have been successfully enrolled in this course.",
+          [
+            { text: "Continue Browsing", style: "cancel" },
+            {
+              text: "Start Learning",
+              onPress: () => router.push(`/course/${id}/content`),
+            },
+          ],
+        );
+      } else {
+        Alert.alert("Error", "You are already enrolled in this course.");
+      }
+    } catch (error) {
+      console.error("Enrollment error:", error);
+      Alert.alert("Error", "Failed to enroll. Please try again.");
+    } finally {
+      setEnrolling(false);
+    }
   };
 
   if (loading) {
@@ -162,9 +211,13 @@ export default function CoursePreviewScreen() {
         </View>
 
         {/* Enroll Button */}
-        <TouchableOpacity style={styles.enrollButton} onPress={handleEnroll}>
+        <TouchableOpacity 
+          style={styles.enrollButton} 
+          onPress={handleEnroll}
+          disabled={enrolling || isEnrolled}
+        >
           <Text style={styles.enrollButtonText}>
-            {isEnrolled ? "Continue Learning" : "Enroll Now"}
+            {enrolling ? 'Enrolling...' : (isEnrolled ? 'Continue Learning' : 'Enroll Now')}
           </Text>
         </TouchableOpacity>
 
