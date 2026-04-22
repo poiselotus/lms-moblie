@@ -60,40 +60,63 @@ const SimpleIcon: React.FC<SimpleIconProps> = ({
   );
 };
 
-// Temporary placeholder for enrollment data
-const getEnrollments = async (userId: string): Promise<any[]> => {
-  console.log("Fetching enrollments for:", userId);
-  return [];
-};
+import { EnrollmentService } from "../../src/services/EnrollmentService";
+import { ProgressService } from "../../src/services/ProgressService";
 
-interface Course {
-  id: string;
-  instructorName?: string;
-  progress?: number;
-}
+  interface Course {
+    id: string;
+    instructorName?: string;
+    progress?: number;
+    lastAccessedAt?: string;
+    lastLesson?: string;
+  }
 
-export default function MyCoursesScreen() {
-  const { user } = useAuth();
-  const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
+  export default function MyCoursesScreen() {
+    const { user } = useAuth();
+    const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]);
+    const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user?.uid) {
-      fetchEnrolledCourses();
-    }
-  }, [user?.uid]);
+    useEffect(() => {
+      if (user?.uid) {
+        fetchEnrolledCourses();
+      }
+    }, [user?.uid]);
 
-  const fetchEnrolledCourses = async () => {
-    try {
-      setLoading(true);
-      const enrollments = await getEnrollments(user!.uid);
-      setEnrolledCourses([]);
-    } catch (error) {
-      console.error("Error fetching enrolled courses:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const fetchEnrolledCourses = async () => {
+      try {
+        setLoading(true);
+        
+        // Get user's enrollments
+        const enrollmentsQuery = query(
+          collection(db, 'enrollments'),
+          where('userId', '==', user!.uid)
+        );
+        const enrollmentsSnapshot = await getDocs(enrollmentsQuery);
+        const courses = [];
+        
+        for (const enrollmentDoc of enrollmentsSnapshot.docs) {
+          const enrollment = enrollmentDoc.data();
+          const courseRef = doc(db, 'courses', enrollment.courseId);
+          const courseDoc = await getDoc(courseRef);
+          if (courseDoc.exists()) {
+            const course = {
+              id: enrollment.courseId,
+              instructorName: courseDoc.data().instructorName,
+              progress: enrollment.progress || 0,
+              lastAccessedAt: enrollment.lastAccessedAt,
+              lastLesson: enrollment.lastAccessedLessonId
+            };
+            courses.push(course);
+          }
+        }
+        
+        setEnrolledCourses(courses);
+      } catch (error) {
+        console.error("Error fetching enrolled courses:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
   const formatCourseTitle = (id: string): string => {
     if (!id) return "Course";
@@ -162,7 +185,15 @@ export default function MyCoursesScreen() {
                 <Text style={styles.progressText}>
                   {course.progress || 0}% complete
                 </Text>
+                {course.lastAccessedAt && (
+                  <Text style={styles.lastAccessedText}>
+                    Last accessed {new Date(course.lastAccessedAt).toLocaleDateString()}
+                  </Text>
+                )}
               </View>
+              <TouchableOpacity style={styles.resumeButton}>
+                <Text style={styles.resumeButtonText}>Resume</Text>
+              </TouchableOpacity>
             </View>
             <SimpleIcon name="chevron-forward" size={20} color="#9CA3AF" />
           </TouchableOpacity>

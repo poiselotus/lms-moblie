@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -24,23 +23,27 @@ export default function CoursePreviewScreen() {
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
   const [isEnrolled, setIsEnrolled] = useState(false);
+  const [enrollmentProgress, setEnrollmentProgress] = useState(null);
 
   useEffect(() => {
     fetchCourseDetails();
   }, [id]);
 
   useEffect(() => {
-    const checkEnrollment = async () => {
-      if (user && id) {
-        const enrolled = await EnrollmentService.checkEnrollmentStatus(
-          user.uid,
-          id,
-        );
-        setIsEnrolled(enrolled);
-      }
-    };
-    checkEnrollment();
+    if (user && id) {
+      checkEnrollmentAndProgress();
+    }
   }, [user, id]);
+
+  const checkEnrollmentAndProgress = async () => {
+    const enrolled = await EnrollmentService.checkEnrollmentStatus(user.uid, id);
+    setIsEnrolled(enrolled);
+    
+    if (enrolled) {
+      const enrollment = await EnrollmentService.getEnrollment(user.uid, id);
+      setEnrollmentProgress(enrollment?.progress || 0);
+    }
+  };
 
   const fetchCourseDetails = async () => {
     try {
@@ -210,14 +213,34 @@ export default function CoursePreviewScreen() {
           )}
         </View>
 
+        {isEnrolled && enrollmentProgress !== null && (
+          <View style={styles.enrolledProgressSection}>
+            <Text style={styles.progressLabel}>Your Progress</Text>
+            <View style={styles.progressBar}>
+              <View style={[styles.progressFill, { width: `${enrollmentProgress}%` }]} />
+            </View>
+            <Text style={styles.progressText}>{enrollmentProgress}% complete</Text>
+            <TouchableOpacity 
+              style={styles.continueButton}
+              onPress={() => router.push(`/course/${id}/content`)}
+            >
+              <Text style={styles.continueButtonText}>Continue Learning</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Enroll Button */}
-        <TouchableOpacity 
-          style={styles.enrollButton} 
+        <TouchableOpacity
+          style={styles.enrollButton}
           onPress={handleEnroll}
           disabled={enrolling || isEnrolled}
         >
           <Text style={styles.enrollButtonText}>
-            {enrolling ? 'Enrolling...' : (isEnrolled ? 'Continue Learning' : 'Enroll Now')}
+            {enrolling
+              ? "Enrolling..."
+              : isEnrolled
+                ? "Continue Learning"
+                : "Enroll Now"}
           </Text>
         </TouchableOpacity>
 
@@ -332,6 +355,32 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   enrollButtonText: { color: "#FFFFFF", fontSize: 18, fontWeight: "bold" },
+  enrolledProgressSection: {
+    backgroundColor: "#F0FDF4",
+    padding: 16,
+    borderRadius: 12,
+    marginVertical: 16,
+    borderWidth: 1,
+    borderColor: "#10B98120",
+  },
+  progressLabel: { fontSize: 14, color: "#166534", fontWeight: "500", marginBottom: 8 },
+  progressBar: { 
+    height: 8, 
+    backgroundColor: "#D1D5DB", 
+    borderRadius: 4, 
+    overflow: "hidden",
+    marginBottom: 4 
+  },
+  progressFill: { height: "100%", backgroundColor: "#10B981", borderRadius: 4 },
+  progressText: { fontSize: 12, color: "#6B7280" },
+  continueButton: {
+    backgroundColor: "#10B981",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 8
+  },
+  continueButtonText: { color: "#FFFFFF", fontWeight: "600" },
   section: { marginBottom: 24 },
   sectionTitle: {
     fontSize: 20,

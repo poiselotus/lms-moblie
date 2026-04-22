@@ -20,5 +20,18 @@ service cloud.firestore {
       allow create, update: if request.auth != null;
       allow delete: if false;
     }
+    
+    // Lesson progress - user specific
+    match /lessonProgress/{progressId} {
+      allow read, write: if request.auth != null && 
+        resource.data.userId == request.auth.uid || 
+        request.auth.uid in resource.data.users;
+    }
+    
+    // Enrollments - user specific
+    match /enrollments/{enrollmentId} {
+      allow read, write: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
+    }
   }
 }
